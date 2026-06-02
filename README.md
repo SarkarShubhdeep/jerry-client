@@ -1,66 +1,59 @@
-# MIE Web Open Source Template
+> **Ongoing project** — Jerry is in early development. New updates will be added soon.
 
-Shared baseline files for MIE Web open source projects — Copilot instructions, `.gitignore`, and more.
+# Jerry Client
 
-## Apply to an Existing Project
+Jerry is a local Electron desktop app that lives in the Mac system tray, provides a chat interface, and generates work narratives from your ActivityWatch data.
 
-### Option 1 — `curl` one-liner
+## What it does
 
-```bash
-bash <(curl -sL https://raw.githubusercontent.com/mieweb/template-mieweb-opensource/main/apply.sh)
-```
+- **Work narratives** — Summarize what you've been working on using ActivityWatch activity data via aw-mcp
+- **Chat interface** — Talk to Jerry to request summaries, ask questions, and refine narratives
+- **System tray** — Runs quietly in the menu bar; open the chat window with a click
+- **Push notifications** — Get reminders and alerts when narratives are ready
+- **Rules engine** — Configurable rules for working hours, tracked apps, and narrative style
 
-### Option 2 — `npx` (Node.js 18+)
+## Tech stack
 
-The `npx` support lives on the [`npx` branch](https://github.com/mieweb/template-mieweb-opensource/tree/npx) to keep `main` clean as a template.
+| Layer | Technology |
+|-------|------------|
+| Desktop | Electron + electron-builder |
+| UI | React + TypeScript + Tailwind CSS |
+| Activity data | ActivityWatch API (localhost:5600) |
+| Storage | electron-store (config and rules) |
 
-```bash
-npx github:mieweb/template-mieweb-opensource#npx
-```
+## Roadmap (v0.1)
 
-### What it does
+| # | Ticket |
+|---|--------|
+| 1 | Project bootstrap and Electron shell |
+| 2 | System tray and window management |
+| 3 | Chat UI and ActivityWatch integration |
+| 4 | Work narrative generation with LLM |
 
-1. Fetches each template file from this repo
-2. Checks if it already exists in your project
-3. If it **doesn't exist** → prompts to **create** or skip
-4. If it **exists but differs** → prompts to:
-   - **(o)verwrite** — replace with the template version
-   - **(a)ppend** — add the template content at the end
-   - **(m)erge** — deduplicate lines (great for `.gitignore`)
-   - **(s)kip** — leave your file untouched
-5. If it's **already identical** → skips automatically
+### v0.1 goals
 
-### Template files included
+- Installs and runs on macOS
+- System tray icon with click-to-toggle chat window
+- Chat UI for requesting work narratives
+- Narratives generated from real ActivityWatch data
+- Native notifications on completion
+- Secure API key configuration
 
-| File | Purpose |
-|------|---------|
-| `.github/copilot-instructions.md` | Code quality, accessibility, i18n, docs standards for GitHub Copilot |
-| `.gitignore` | Standard ignores for Node.js projects |
+## Prerequisites
 
-## Adding new template files
+- macOS
+- [ActivityWatch](https://activitywatch.net/) running locally
+- Node.js 18+
 
-Edit the `TEMPLATE_FILES` array in:
+## Getting started
 
-- [apply.sh](apply.sh) (shell script — always on `main`)
-- `bin/apply-template.mjs` (Node.js CLI — on the [`npx` branch](https://github.com/mieweb/template-mieweb-opensource/tree/npx))
-
-## Starting a new project
-
-1. Use this repo as a [GitHub template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template)
-2. Replace this README with your own — consider [Working Backwards](https://docs.google.com/document/d/1zxa0Rgq56xGHOgY51DbZJVUlWMRh2pbd6AupVYI9IZc)
-3. Use `npx create` to scaffold your framework
-4. Use API-first thinking (no UI-first)
-
-## MIE Web UI (HTML projects only)
-
-If your project is an **HTML project with a UI**, consider using the [MIE Web UI component library](https://ui.mieweb.org/):
+Setup instructions will be added as the project is scaffolded. For now, clone the repo:
 
 ```bash
-npm install @mieweb/ui
-# or
-yarn add @mieweb/ui
-# or
-pnpm add @mieweb/ui
+git clone https://github.com/SarkarShubhdeep/jerry-client.git
+cd jerry-client
 ```
 
-> **Note:** This only applies to HTML/UI projects. If your project is Python, a pure API, or another non-UI stack, skip this step.
+## License
+
+MIT — see [LICENSE](LICENSE).
