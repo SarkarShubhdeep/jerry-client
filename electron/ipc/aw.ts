@@ -1,9 +1,18 @@
 import { ipcMain } from 'electron'
-import { fetchActivitySummary } from '../aw/client'
+import { checkActivityWatchConnection, fetchActivitySummary } from '../aw/client'
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
 export function registerAwIpc(): void {
+  ipcMain.handle('jerry:aw:checkConnection', async (): Promise<IpcResult<Awaited<ReturnType<typeof checkActivityWatchConnection>>>> => {
+    try {
+      return { ok: true, data: await checkActivityWatchConnection() }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { ok: false, error: message }
+    }
+  })
+
   ipcMain.handle(
     'jerry:aw:fetchActivity',
     async (_event, args: { rangeHours?: number }): Promise<IpcResult<Awaited<ReturnType<typeof fetchActivitySummary>>>> => {

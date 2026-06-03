@@ -55,7 +55,7 @@ export function registerLlmIpc(): void {
         return {
           ok: false,
           error:
-            'OpenAI API key is not configured. Add it in settings or set OPENAI_API_KEY in .env.',
+            'OpenAI API key is not configured. Add it in Settings.',
         }
       }
 

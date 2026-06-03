@@ -8,6 +8,11 @@ export type LatestWatcherEvent = {
   timestamp: string
 }
 
+export type AwConnectionStatus = {
+  connected: boolean
+  error?: string
+}
+
 export type AwActivitySummary = {
   connected: true
   bucketCount: number

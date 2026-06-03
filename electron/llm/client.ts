@@ -1,17 +1,38 @@
 import OpenAI from 'openai'
 import type { EasyInputMessage } from 'openai/resources/responses/responses'
-import { JERRY_SYSTEM_PROMPT } from './prompt'
+import { buildJerrySystemPrompt } from './prompt'
 import type { LlmStatusCallback, LlmStatusUpdate } from './status'
-import { getApiKey } from '../store/settings'
-import type { ChatMessage, ChatResponse } from './types'
+import { getApiKey, getModel } from '../store/settings'
+import type { ChatMessage, ChatResponse, LlmApiPath } from './types'
 
-const DEFAULT_MODEL = process.env.OPENAI_MODEL?.trim() || 'gpt-4o-mini'
+const API_KEY_ERROR = 'OpenAI API key is not configured. Add it in Settings.'
+
+function stripMessageForApi(message: ChatMessage): ChatMessage {
+  return { role: message.role, content: message.content }
+}
 
 function messagesForApi(messages: ChatMessage[]): ChatMessage[] {
-  if (messages.some((m) => m.role === 'system')) {
-    return messages
+  const stripped = messages.map(stripMessageForApi)
+  if (stripped.some((m) => m.role === 'system')) {
+    return stripped
   }
-  return [{ role: 'system', content: JERRY_SYSTEM_PROMPT }, ...messages]
+  const modelId = getModel()
+  return [
+    { role: 'system', content: buildJerrySystemPrompt(modelId) },
+    ...stripped,
+  ]
+}
+
+function assistantMessage(
+  content: string,
+  model: string,
+  api: LlmApiPath
+): ChatResponse {
+  return {
+    model,
+    api,
+    message: { role: 'assistant', content, model, api },
+  }
 }
 
 function toResponsesInput(messages: ChatMessage[]): EasyInputMessage[] {
@@ -36,6 +57,7 @@ function formatWebSearchDone(durationMs: number | undefined): string {
 async function chatViaResponses(
   client: OpenAI,
   input: EasyInputMessage[],
+  requestedModel: string,
   onStatus?: LlmStatusCallback
 ): Promise<ChatResponse> {
   let webSearchStartedAt: number | null = null
@@ -44,7 +66,7 @@ async function chatViaResponses(
   let text = ''
 
   const stream = await client.responses.create({
-    model: DEFAULT_MODEL,
+    model: requestedModel,
     input,
     tools: [{ type: 'web_search_preview' }],
     stream: true,
@@ -89,8 +111,9 @@ async function chatViaResponses(
         if (!content) {
           throw new Error('No response from the model')
         }
+        const resolvedModel = event.response.model ?? requestedModel
         emit(onStatus, { phase: 'done', label: 'Done' })
-        return { message: { role: 'assistant', content } }
+        return assistantMessage(content, resolvedModel, 'responses')
       }
 
       case 'response.failed':
@@ -105,7 +128,7 @@ async function chatViaResponses(
 
   if (text.trim()) {
     emit(onStatus, { phase: 'done', label: 'Done' })
-    return { message: { role: 'assistant', content: text.trim() } }
+    return assistantMessage(text.trim(), requestedModel, 'responses')
   }
 
   throw new Error('No response from the model')
@@ -114,6 +137,7 @@ async function chatViaResponses(
 async function chatViaCompletions(
   client: OpenAI,
   messages: ChatMessage[],
+  requestedModel: string,
   onStatus?: LlmStatusCallback
 ): Promise<ChatResponse> {
   emit(onStatus, { phase: 'thinking', label: 'Thinking…' })
@@ -122,12 +146,17 @@ async function chatViaCompletions(
   let text = ''
 
   const stream = await client.chat.completions.create({
-    model: DEFAULT_MODEL,
+    model: requestedModel,
     messages,
     stream: true,
   })
 
+  let resolvedModel = requestedModel
+
   for await (const chunk of stream) {
+    if (chunk.model) {
+      resolvedModel = chunk.model
+    }
     const delta = chunk.choices[0]?.delta?.content
     if (!delta) continue
 
@@ -144,7 +173,7 @@ async function chatViaCompletions(
   }
 
   emit(onStatus, { phase: 'done', label: 'Done' })
-  return { message: { role: 'assistant', content } }
+  return assistantMessage(content, resolvedModel, 'completions')
 }
 
 function shouldFallbackToCompletions(err: unknown): boolean {
@@ -166,23 +195,22 @@ export async function chat(
 ): Promise<ChatResponse> {
   const apiKey = getApiKey()
   if (!apiKey) {
-    throw new Error(
-      'OpenAI API key is not configured. Add it in settings or set OPENAI_API_KEY in .env.'
-    )
+    throw new Error(API_KEY_ERROR)
   }
 
   const client = new OpenAI({ apiKey })
+  const requestedModel = getModel()
   const input = toResponsesInput(messages)
   const apiMessages = messagesForApi(messages)
 
   emit(onStatus, { phase: 'thinking', label: 'Thinking…' })
 
   try {
-    return await chatViaResponses(client, input, onStatus)
+    return await chatViaResponses(client, input, requestedModel, onStatus)
   } catch (err) {
     if (!shouldFallbackToCompletions(err)) {
       throw err
     }
-    return await chatViaCompletions(client, apiMessages, onStatus)
+    return await chatViaCompletions(client, apiMessages, requestedModel, onStatus)
   }
 }

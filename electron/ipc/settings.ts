@@ -1,8 +1,11 @@
 import { ipcMain } from 'electron'
 import {
-  getSetting,
+  getApiKeyConfiguration,
+  getPublicSetting,
+  isPublicSettingsKey,
   isSettingsKey,
   setSetting,
+  type PublicSettingsKey,
   type SettingsKey,
 } from '../store/settings'
 import type { IpcResult } from './aw'
@@ -12,12 +15,12 @@ export function registerSettingsIpc(): void {
     'jerry:settings:get',
     async (_event, args: { key?: string }): Promise<IpcResult<string>> => {
       const key = args?.key
-      if (typeof key !== 'string' || !isSettingsKey(key)) {
+      if (typeof key !== 'string' || !isPublicSettingsKey(key)) {
         return { ok: false, error: 'Invalid settings key' }
       }
 
       try {
-        return { ok: true, data: getSetting(key as SettingsKey) }
+        return { ok: true, data: getPublicSetting(key as PublicSettingsKey) }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return { ok: false, error: message }
@@ -39,6 +42,18 @@ export function registerSettingsIpc(): void {
       try {
         setSetting(key as SettingsKey, args.value)
         return { ok: true, data: undefined }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        return { ok: false, error: message }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'jerry:settings:isConfigured',
+    async (): Promise<IpcResult<{ openai: boolean; anthropic: boolean }>> => {
+      try {
+        return { ok: true, data: getApiKeyConfiguration() }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return { ok: false, error: message }

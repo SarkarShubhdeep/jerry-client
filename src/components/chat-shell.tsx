@@ -1,39 +1,37 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useState } from "react";
-import { useTheme } from "next-themes";
-import {
-    Activity,
-    ArrowUp,
-    Loader2,
-    Moon,
-    RefreshCw,
-    Settings,
-    Sparkles,
-    Sun,
-    Trash2,
-} from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { ArrowUp, Loader2, Settings, Sparkles, Trash2 } from "lucide-react";
+import { AwStatusBadge } from "@/components/aw-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
     ChatActivity,
     type ChatActivityStep,
 } from "@/components/chat-activity";
 import { ChatMarkdown } from "@/components/chat-markdown";
+import { SettingsDialog } from "@/components/settings-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAutoResizeTextarea } from "@/hooks/use-auto-resize-textarea";
+import { useJerryThemeBootstrap } from "@/hooks/use-jerry-settings";
 import { useStickToBottom } from "@/hooks/use-stick-to-bottom";
+import {
+    DEFAULT_OPENAI_MODEL,
+    getOpenAiModelLabel,
+    OPENAI_MODEL_GROUPS,
+    OPENAI_MODELS,
+} from "@/lib/openai-models";
 import { applyStatusUpdate } from "@/lib/chat-activity";
 import { normalizeUserMessageContent } from "@/lib/chat-message";
-import type { AwActivitySummary, IpcResult } from "@/types/activitywatch";
 import type { ChatMessage } from "@/types/llm";
 
 type ThreadItem =
@@ -46,32 +44,16 @@ function threadToMessages(thread: ThreadItem[]): ChatMessage[] {
             (item): item is { kind: "message"; message: ChatMessage } =>
                 item.kind === "message",
         )
-        .map((item) => item.message);
-}
-
-type RangePreset = "5h" | "today";
-
-function hoursForPreset(preset: RangePreset): number {
-    if (preset === "5h") return 5;
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    return (now.getTime() - start.getTime()) / (60 * 60 * 1000);
-}
-
-function formatTime(iso: string): string {
-    return new Date(iso).toLocaleTimeString(undefined, {
-        hour: "numeric",
-        minute: "2-digit",
-    });
+        .map((item) => ({
+            role: item.message.role,
+            content: item.message.content,
+        }));
 }
 
 export function ChatShell() {
-    const { theme, setTheme } = useTheme();
-    const [preset, setPreset] = useState<RangePreset>("5h");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [summary, setSummary] = useState<AwActivitySummary | null>(null);
+    useJerryThemeBootstrap();
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [openaiModel, setOpenaiModel] = useState(DEFAULT_OPENAI_MODEL);
     const [thread, setThread] = useState<ThreadItem[]>([]);
     const [liveActivity, setLiveActivity] = useState<ChatActivityStep[]>([]);
     const [chatLoading, setChatLoading] = useState(false);
@@ -88,33 +70,22 @@ export function ChatShell() {
         scrollToBottom(thread.length === 0 ? "auto" : "smooth");
     }, [thread, liveActivity, chatLoading, chatError, scrollToBottom]);
 
-    const fetchActivity = useCallback(async () => {
-        if (!window.jerry?.aw) {
-            setError(
-                "ActivityWatch API is only available in the Electron app.",
-            );
-            return;
-        }
+    useEffect(() => {
+        if (!window.jerry?.settings) return;
+        void window.jerry.settings.get("openaiModel").then((result) => {
+            if (
+                result.ok &&
+                OPENAI_MODELS.some((model) => model.id === result.data)
+            ) {
+                setOpenaiModel(result.data);
+            }
+        });
+    }, []);
 
-        setLoading(true);
-        setError(null);
-
-        const result: IpcResult<AwActivitySummary> =
-            await window.jerry.aw.fetchActivity(hoursForPreset(preset));
-
-        setLoading(false);
-
-        if (!result.ok) {
-            setSummary(null);
-            setError(result.error);
-            return;
-        }
-
-        setSummary(result.data);
-    }, [preset]);
-
-    const toggleTheme = () => {
-        setTheme(theme === "dark" ? "light" : "dark");
+    const handleModelChange = async (model: string) => {
+        setOpenaiModel(model);
+        if (!window.jerry?.settings) return;
+        await window.jerry.settings.set("openaiModel", model);
     };
 
     const sendMessage = useCallback(async () => {
@@ -198,207 +169,49 @@ export function ChatShell() {
                         Jerry
                     </Badge>
 
-                    {/* Right: Settings dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 bg-background/90 backdrop-blur-sm"
-                                style={
-                                    {
-                                        WebkitAppRegion: "no-drag",
-                                    } as React.CSSProperties
-                                }
-                                aria-label="Settings"
-                            >
-                                <Settings
-                                    className="size-4"
-                                    aria-hidden="true"
-                                />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={toggleTheme}>
-                                {theme === "dark" ? (
-                                    <>
-                                        <Sun
-                                            className="mr-2 size-4"
-                                            aria-hidden="true"
-                                        />
-                                        Light mode
-                                    </>
-                                ) : (
-                                    <>
-                                        <Moon
-                                            className="mr-2 size-4"
-                                            aria-hidden="true"
-                                        />
-                                        Dark mode
-                                    </>
-                                )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={clearChat}
-                                disabled={thread.length === 0}
-                            >
-                                <Trash2
-                                    className="mr-2 size-4"
-                                    aria-hidden="true"
-                                />
-                                Clear chat
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    {/* Right: ActivityWatch status + Clear chat + Settings */}
+                    <div
+                        className="flex items-center gap-1"
+                        style={
+                            {
+                                WebkitAppRegion: "no-drag",
+                            } as React.CSSProperties
+                        }
+                    >
+                        <AwStatusBadge />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 bg-background/90 backdrop-blur-sm"
+                            onClick={clearChat}
+                            disabled={thread.length === 0}
+                            aria-label="Clear chat"
+                        >
+                            <Trash2 className="size-4" aria-hidden="true" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 bg-background/90 backdrop-blur-sm"
+                            onClick={() => setSettingsOpen(true)}
+                            aria-label="Settings"
+                        >
+                            <Settings className="size-4" aria-hidden="true" />
+                        </Button>
+                    </div>
                 </div>
             </div>
+
+            <SettingsDialog
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+            />
 
             <div
                 ref={scrollContainerRef}
                 className="min-h-0 flex-1 overflow-y-auto pt-12"
             >
                 <div className="mx-auto max-w-lg space-y-4 px-4 py-4">
-                    <Card className="bg-card/80 backdrop-blur-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                <Activity
-                                    className="size-4"
-                                    aria-hidden="true"
-                                />
-                                ActivityWatch
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex flex-wrap gap-2">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={
-                                        preset === "5h" ? "default" : "outline"
-                                    }
-                                    onClick={() => setPreset("5h")}
-                                >
-                                    Last 5 hours
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={
-                                        preset === "today"
-                                            ? "default"
-                                            : "outline"
-                                    }
-                                    onClick={() => setPreset("today")}
-                                >
-                                    Today
-                                </Button>
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={fetchActivity}
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <Loader2
-                                            className="size-4 animate-spin"
-                                            aria-hidden="true"
-                                        />
-                                    ) : (
-                                        <RefreshCw
-                                            className="size-4"
-                                            aria-hidden="true"
-                                        />
-                                    )}
-                                    Fetch watchers
-                                </Button>
-                            </div>
-
-                            {error && (
-                                <p
-                                    className="text-destructive text-sm"
-                                    role="alert"
-                                >
-                                    {error}
-                                </p>
-                            )}
-
-                            {summary && (
-                                <div className="space-y-2 text-sm">
-                                    <p className="text-muted-foreground">
-                                        {summary.bucketCount} buckets ·{" "}
-                                        {summary.rangeHours < 1
-                                            ? "under 1 hour"
-                                            : `${Math.round(summary.rangeHours * 10) / 10}h`}{" "}
-                                        window ·{" "}
-                                        {formatTime(summary.range.start)} –{" "}
-                                        {formatTime(summary.range.end)}
-                                    </p>
-                                    <p className="text-muted-foreground text-xs">
-                                        {summary.totalEventCount.toLocaleString()}{" "}
-                                        events · {summary.totalApiCalls} API
-                                        call
-                                        {summary.totalApiCalls === 1
-                                            ? ""
-                                            : "s"}{" "}
-                                        (1,000 per page)
-                                    </p>
-                                    {summary.afk && (
-                                        <p>
-                                            AFK:{" "}
-                                            <span className="font-medium">
-                                                {summary.afk.status}
-                                            </span>{" "}
-                                            <span className="text-muted-foreground">
-                                                (
-                                                {formatTime(
-                                                    summary.afk.timestamp,
-                                                )}
-                                                )
-                                            </span>
-                                        </p>
-                                    )}
-                                    <ul className="space-y-1.5">
-                                        {summary.latest.map((item) => (
-                                            <li
-                                                key={item.watcher}
-                                                className="rounded-md border bg-background/50 px-2 py-1.5"
-                                            >
-                                                <span className="text-muted-foreground uppercase text-xs">
-                                                    {item.watcher}
-                                                </span>
-                                                <p className="font-medium truncate">
-                                                    {item.app}
-                                                </p>
-                                                {item.title &&
-                                                    item.watcher !== "afk" && (
-                                                        <p className="text-muted-foreground truncate text-xs">
-                                                            {item.title}
-                                                        </p>
-                                                    )}
-                                                <p className="text-muted-foreground text-xs">
-                                                    {formatTime(item.timestamp)}{" "}
-                                                    ·{" "}
-                                                    {(
-                                                        summary.eventCounts[
-                                                            item.watcher
-                                                        ] ?? 0
-                                                    ).toLocaleString()}{" "}
-                                                    events
-                                                    {(summary.eventFetchPages[
-                                                        item.watcher
-                                                    ] ?? 1) > 1 &&
-                                                        ` · ${summary.eventFetchPages[item.watcher]} pages`}
-                                                </p>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
                     <div className="space-y-3" role="log" aria-live="polite">
                         {thread.length === 0 && !chatLoading && (
                             <p className="rounded-lg border border-dashed bg-background/50 p-6 text-center text-muted-foreground text-sm">
@@ -427,9 +240,33 @@ export function ChatShell() {
                                             : "mr-8 bg-background/50"
                                     }`}
                                 >
-                                    <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
-                                        {msg.role === "user" ? "You" : "Jerry"}
-                                    </p>
+                                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                                        <p className="text-muted-foreground text-xs font-medium uppercase">
+                                            {msg.role === "user"
+                                                ? "You"
+                                                : "Jerry"}
+                                        </p>
+                                        {msg.role === "assistant" && msg.model && (
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono text-[10px] font-normal normal-case"
+                                                title={
+                                                    msg.api
+                                                        ? `OpenAI ${msg.api} API`
+                                                        : undefined
+                                                }
+                                            >
+                                                {getOpenAiModelLabel(msg.model)}{" "}
+                                                <span className="text-muted-foreground">
+                                                    ({msg.model}
+                                                    {msg.api
+                                                        ? ` · ${msg.api}`
+                                                        : ""}
+                                                    )
+                                                </span>
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <ChatMarkdown content={msg.content} />
                                 </div>
                             );
@@ -458,7 +295,7 @@ export function ChatShell() {
                 </div>
             </div>
 
-            <footer className="shrink-0 bg-background/90 backdrop-blur-sm p-3">
+            <footer className="shrink-0 space-y-2 bg-background/90 p-3 backdrop-blur-sm">
                 <div className="mx-auto flex max-w-lg items-center gap-2 rounded-2xl border bg-background px-3 py-2">
                     <Textarea
                         ref={textareaRef}
@@ -493,6 +330,39 @@ export function ChatShell() {
                             <ArrowUp className="size-4" aria-hidden="true" />
                         )}
                     </Button>
+                </div>
+                <div className="mx-auto flex max-w-lg items-center justify-end gap-2">
+                    <span className="text-muted-foreground text-xs">
+                        Next message uses
+                    </span>
+                    <Select
+                        value={openaiModel}
+                        onValueChange={(value) => void handleModelChange(value)}
+                        disabled={chatLoading}
+                    >
+                        <SelectTrigger
+                            size="sm"
+                            className="h-7 border-0 bg-transparent text-muted-foreground shadow-none"
+                            aria-label="OpenAI model for next message"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent align="end" className="max-h-72">
+                            {OPENAI_MODEL_GROUPS.map((group) => (
+                                <SelectGroup key={group.label}>
+                                    <SelectLabel>{group.label}</SelectLabel>
+                                    {group.models.map((model) => (
+                                        <SelectItem
+                                            key={model.id}
+                                            value={model.id}
+                                        >
+                                            {model.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </footer>
         </div>

@@ -7,6 +7,8 @@ export type ChatActivityStep = {
   phase: LlmStatusPhase
   label: string
   state: 'active' | 'done'
+  /** When the step became active (used to format duration on completion) */
+  startedAt?: number
 }
 
 type ChatActivityProps = {

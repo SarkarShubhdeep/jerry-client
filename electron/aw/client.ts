@@ -38,6 +38,40 @@ async function awFetch(path: string, timeoutMs = 8_000): Promise<Response> {
   })
 }
 
+export type AwConnectionStatus = {
+  connected: boolean
+  error?: string
+}
+
+export async function checkActivityWatchConnection(): Promise<AwConnectionStatus> {
+  try {
+    const res = await awFetch('/buckets', 3_000)
+    if (!res.ok) {
+      return {
+        connected: false,
+        error: `ActivityWatch returned ${res.status}`,
+      }
+    }
+    const body = (await res.json()) as Record<string, Bucket>
+    if (Object.keys(body).length === 0) {
+      return {
+        connected: false,
+        error: 'No ActivityWatch buckets found. Is a watcher running?',
+      }
+    }
+    return { connected: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (message.includes('fetch failed') || message.includes('ECONNREFUSED')) {
+      return {
+        connected: false,
+        error: `ActivityWatch is not reachable at ${baseUrl()}`,
+      }
+    }
+    return { connected: false, error: message }
+  }
+}
+
 async function fetchBuckets(): Promise<Bucket[]> {
   const res = await awFetch('/buckets')
   if (!res.ok) {

@@ -4,7 +4,9 @@ import path from 'path'
 import { registerAwIpc } from './ipc/aw'
 import { registerLlmIpc } from './ipc/llm'
 import { registerSettingsIpc } from './ipc/settings'
+import { migrateEnvApiKeyOnce } from './store/settings'
 
+// Optional dev overrides (e.g. ACTIVITYWATCH_BASE_URL). LLM keys are set in-app only.
 loadEnv({ path: path.join(__dirname, '..', '.env') })
 const isDev = !app.isPackaged
 
@@ -32,6 +34,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  migrateEnvApiKeyOnce()
   registerAwIpc()
   registerLlmIpc()
   registerSettingsIpc()

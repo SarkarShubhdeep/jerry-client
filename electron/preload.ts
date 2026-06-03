@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('jerry', {
   ping: (): string => 'pong',
   getVersion: (): string => process.versions.electron,
   aw: {
+    checkConnection: (): Promise<IpcResult<{ connected: boolean; error?: string }>> =>
+      ipcRenderer.invoke('jerry:aw:checkConnection'),
     fetchActivity: (rangeHours: number): Promise<IpcResult<AwActivitySummary>> =>
       ipcRenderer.invoke('jerry:aw:fetchActivity', { rangeHours }),
   },
@@ -34,5 +36,7 @@ contextBridge.exposeInMainWorld('jerry', {
       ipcRenderer.invoke('jerry:settings:get', { key }),
     set: (key: string, value: string): Promise<IpcResult<void>> =>
       ipcRenderer.invoke('jerry:settings:set', { key, value }),
+    isConfigured: (): Promise<IpcResult<{ openai: boolean; anthropic: boolean }>> =>
+      ipcRenderer.invoke('jerry:settings:isConfigured'),
   },
 })
