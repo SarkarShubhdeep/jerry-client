@@ -1,7 +1,11 @@
+import { config as loadEnv } from 'dotenv'
 import { app, BrowserWindow } from 'electron'
 import path from 'path'
 import { registerAwIpc } from './ipc/aw'
+import { registerLlmIpc } from './ipc/llm'
+import { registerSettingsIpc } from './ipc/settings'
 
+loadEnv({ path: path.join(__dirname, '..', '.env') })
 const isDev = !app.isPackaged
 
 function createWindow() {
@@ -29,6 +33,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
   registerAwIpc()
+  registerLlmIpc()
+  registerSettingsIpc()
   createWindow()
 
   app.on('activate', () => {
