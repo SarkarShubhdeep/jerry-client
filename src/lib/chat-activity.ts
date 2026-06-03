@@ -33,6 +33,8 @@ export function applyStatusUpdate(
   const next = finalizeActiveSteps(steps)
 
   switch (update.phase) {
+    case 'fetching_activity':
+      return upsertStep(next, 'fetching_activity', update.label, 'active', Date.now())
     case 'thinking':
       return upsertStep(next, 'thinking', update.label, 'active', Date.now())
     case 'web_search_searching':

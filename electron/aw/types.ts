@@ -21,6 +21,22 @@ export type LatestWatcherEvent = {
   timestamp: string
 }
 
+export type TopActivity = {
+  watcher: WatcherKind
+  app: string
+  title: string
+  durationSeconds: number
+  eventCount: number
+}
+
+/** Work-related page from the AW web watcher, ranked by time on page. */
+export type WebLinkActivity = {
+  url: string
+  title: string
+  durationSeconds: number
+  eventCount: number
+}
+
 export type AwActivitySummary = {
   connected: true
   bucketCount: number
@@ -28,6 +44,10 @@ export type AwActivitySummary = {
   range: { start: string; end: string }
   afk: { status: string; timestamp: string } | null
   latest: LatestWatcherEvent[]
+  /** Top apps/titles by summed event duration in the fetched range. */
+  topActivities: TopActivity[]
+  /** GitHub, docs, and other work-related URLs from the web watcher. */
+  topWebLinks: WebLinkActivity[]
   eventCounts: Partial<Record<WatcherKind, number>>
   /** AW API calls per watcher (1000 events per page). */
   eventFetchPages: Partial<Record<WatcherKind, number>>

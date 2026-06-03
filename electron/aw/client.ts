@@ -1,9 +1,16 @@
 import os from 'os'
+import {
+  aggregateTopActivities,
+  aggregateTopWebLinks,
+  mergeTopActivities,
+} from './aggregate'
 import type {
   AwActivityResult,
   Bucket,
   LatestWatcherEvent,
   RawEvent,
+  TopActivity,
+  WebLinkActivity,
   WatcherKind,
 } from './types'
 
@@ -218,6 +225,8 @@ export async function fetchActivitySummary(
     }
 
     const latest: LatestWatcherEvent[] = []
+    const perWatcherTop: TopActivity[] = []
+    let topWebLinks: WebLinkActivity[] = []
     const eventCounts: Partial<Record<WatcherKind, number>> = {}
     const eventFetchPages: Partial<Record<WatcherKind, number>> = {}
     let afk: { status: string; timestamp: string } | null = null
@@ -237,6 +246,11 @@ export async function fetchActivitySummary(
         eventCounts[watcher] = events.length
         eventFetchPages[watcher] = pages
 
+        perWatcherTop.push(...aggregateTopActivities(events, watcher))
+        if (watcher === 'web') {
+          topWebLinks = aggregateTopWebLinks(events)
+        }
+
         const newest = newestEvent(events)
         if (!newest) return
 
@@ -255,6 +269,8 @@ export async function fetchActivitySummary(
       })
     )
 
+    const topActivities = mergeTopActivities(perWatcherTop)
+
     latest.sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
@@ -271,6 +287,8 @@ export async function fetchActivitySummary(
       range: { start: startIso, end: endIso },
       afk,
       latest,
+      topActivities,
+      topWebLinks,
       eventCounts,
       eventFetchPages,
       totalEventCount,
