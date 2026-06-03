@@ -1,5 +1,15 @@
 import OpenAI from 'openai'
 import type { EasyInputMessage } from 'openai/resources/responses/responses'
+import {
+  checkActivityWatchConnection,
+  fetchActivitySummary,
+} from '../aw/client'
+import { formatActivityContext } from './activity-context'
+import {
+  lastUserMessage,
+  needsActivityContext,
+  parseActivityRangeHours,
+} from './activity-intent'
 import { buildJerrySystemPrompt } from './prompt'
 import type { LlmStatusCallback, LlmStatusUpdate } from './status'
 import { getApiKey, getModel } from '../store/settings'
@@ -11,16 +21,50 @@ function stripMessageForApi(message: ChatMessage): ChatMessage {
   return { role: message.role, content: message.content }
 }
 
-function messagesForApi(messages: ChatMessage[]): ChatMessage[] {
+function messagesForApi(
+  messages: ChatMessage[],
+  activityContext?: string
+): ChatMessage[] {
   const stripped = messages.map(stripMessageForApi)
   if (stripped.some((m) => m.role === 'system')) {
     return stripped
   }
   const modelId = getModel()
   return [
-    { role: 'system', content: buildJerrySystemPrompt(modelId) },
+    {
+      role: 'system',
+      content: buildJerrySystemPrompt(modelId, activityContext),
+    },
     ...stripped,
   ]
+}
+
+async function resolveActivityContext(
+  messages: ChatMessage[],
+  onStatus?: LlmStatusCallback
+): Promise<string | undefined> {
+  const userText = lastUserMessage(messages)
+  if (!userText || !needsActivityContext(userText)) {
+    return undefined
+  }
+
+  emit(onStatus, { phase: 'fetching_activity', label: 'Reading ActivityWatch…' })
+
+  const connection = await checkActivityWatchConnection()
+  if (!connection.connected) {
+    throw new Error(
+      connection.error ??
+        'ActivityWatch is not reachable. Start ActivityWatch and ensure the AW badge is green.'
+    )
+  }
+
+  const rangeHours = parseActivityRangeHours(userText)
+  const summary = await fetchActivitySummary(rangeHours)
+  if (!summary.connected) {
+    throw new Error(summary.error)
+  }
+
+  return formatActivityContext(summary)
 }
 
 function assistantMessage(
@@ -35,8 +79,11 @@ function assistantMessage(
   }
 }
 
-function toResponsesInput(messages: ChatMessage[]): EasyInputMessage[] {
-  return messagesForApi(messages).map((m) => ({
+function toResponsesInput(
+  messages: ChatMessage[],
+  activityContext?: string
+): EasyInputMessage[] {
+  return messagesForApi(messages, activityContext).map((m) => ({
     role: m.role === 'system' ? 'developer' : m.role,
     content: m.content,
   }))
@@ -200,8 +247,9 @@ export async function chat(
 
   const client = new OpenAI({ apiKey })
   const requestedModel = getModel()
-  const input = toResponsesInput(messages)
-  const apiMessages = messagesForApi(messages)
+  const activityContext = await resolveActivityContext(messages, onStatus)
+  const input = toResponsesInput(messages, activityContext)
+  const apiMessages = messagesForApi(messages, activityContext)
 
   emit(onStatus, { phase: 'thinking', label: 'Thinking…' })
 

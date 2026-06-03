@@ -13,6 +13,21 @@ export type AwConnectionStatus = {
   error?: string
 }
 
+export type TopActivity = {
+  watcher: WatcherKind
+  app: string
+  title: string
+  durationSeconds: number
+  eventCount: number
+}
+
+export type WebLinkActivity = {
+  url: string
+  title: string
+  durationSeconds: number
+  eventCount: number
+}
+
 export type AwActivitySummary = {
   connected: true
   bucketCount: number
@@ -20,6 +35,8 @@ export type AwActivitySummary = {
   range: { start: string; end: string }
   afk: { status: string; timestamp: string } | null
   latest: LatestWatcherEvent[]
+  topActivities: TopActivity[]
+  topWebLinks: WebLinkActivity[]
   eventCounts: Partial<Record<WatcherKind, number>>
   eventFetchPages: Partial<Record<WatcherKind, number>>
   totalEventCount: number

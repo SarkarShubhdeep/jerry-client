@@ -20,6 +20,7 @@ export type ChatResponse = {
 }
 
 export type LlmStatusPhase =
+  | 'fetching_activity'
   | 'thinking'
   | 'web_search_searching'
   | 'web_search_done'

@@ -1,8 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { ArrowUp, Loader2, Settings, Sparkles, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ArrowUp, Loader2, Settings, Trash2 } from "lucide-react";
 import { AwStatusBadge } from "@/components/aw-status-badge";
+import {
+    BUILD_INFO_PANEL_ID,
+    BuildInfoPanel,
+} from "@/components/build-info-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +57,8 @@ function threadToMessages(thread: ThreadItem[]): ChatMessage[] {
 export function ChatShell() {
     useJerryThemeBootstrap();
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [buildInfoOpen, setBuildInfoOpen] = useState(false);
+    const buildInfoAnchorRef = useRef<HTMLDivElement>(null);
     const [openaiModel, setOpenaiModel] = useState(DEFAULT_OPENAI_MODEL);
     const [thread, setThread] = useState<ThreadItem[]>([]);
     const [liveActivity, setLiveActivity] = useState<ChatActivityStep[]>([]);
@@ -69,6 +75,20 @@ export function ChatShell() {
     useLayoutEffect(() => {
         scrollToBottom(thread.length === 0 ? "auto" : "smooth");
     }, [thread, liveActivity, chatLoading, chatError, scrollToBottom]);
+
+    useEffect(() => {
+        if (!buildInfoOpen) return;
+
+        const onPointerDown = (event: PointerEvent) => {
+            const anchor = buildInfoAnchorRef.current;
+            if (anchor && !anchor.contains(event.target as Node)) {
+                setBuildInfoOpen(false);
+            }
+        };
+
+        document.addEventListener("pointerdown", onPointerDown);
+        return () => document.removeEventListener("pointerdown", onPointerDown);
+    }, [buildInfoOpen]);
 
     useEffect(() => {
         if (!window.jerry?.settings) return;
@@ -155,19 +175,34 @@ export function ChatShell() {
                 style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             >
                 <div className="flex items-start justify-between">
-                    {/* Left: Jerry badge */}
-                    <Badge
-                        variant="outline"
-                        className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm ml-16 mt-1 px-2 py-1 "
+                    {/* Left: Jerry badge + build info panel */}
+                    <div
+                        ref={buildInfoAnchorRef}
+                        className="relative ml-16 mt-1"
                         style={
                             {
                                 WebkitAppRegion: "no-drag",
                             } as React.CSSProperties
                         }
                     >
-                        {/* <Sparkles className="size-3.5" aria-hidden="true" /> */}
-                        Jerry <span className="text-xs font-mono">v0.1</span>
-                    </Badge>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-auto gap-1.5 bg-background/90 px-2 py-1 font-normal backdrop-blur-sm"
+                            aria-expanded={buildInfoOpen}
+                            aria-controls={BUILD_INFO_PANEL_ID}
+                            aria-label="About Jerry v0.1 beta"
+                            onClick={() => setBuildInfoOpen((open) => !open)}
+                        >
+                            Jerry{" "}
+                            <span className="font-mono text-xs">v0.1</span>
+                        </Button>
+                        <BuildInfoPanel
+                            open={buildInfoOpen}
+                            onOpenChange={setBuildInfoOpen}
+                        />
+                    </div>
 
                     {/* Right: ActivityWatch status + Clear chat + Settings */}
                     <div
@@ -215,7 +250,12 @@ export function ChatShell() {
                     <div className="space-y-3" role="log" aria-live="polite">
                         {thread.length === 0 && !chatLoading && (
                             <p className="rounded-lg border border-dashed bg-background/50 p-6 text-center text-muted-foreground text-sm">
-                                Ask Jerry anything. Use{" "}
+                                Ask Jerry anything, or try{" "}
+                                <span className="font-medium text-foreground">
+                                    What have I been working on today?
+                                </span>
+                                . Activity summaries need ActivityWatch running
+                                (green AW badge). Use{" "}
                                 <span className="font-mono"># Title</span> for a
                                 topic; Markdown is supported. Shift+Enter for a
                                 new line.
