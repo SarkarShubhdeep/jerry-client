@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import path from 'path'
+import { registerAwIpc } from './ipc/aw'
 
 const isDev = !app.isPackaged
 
@@ -25,6 +26,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  registerAwIpc()
   createWindow()
 
   app.on('activate', () => {
