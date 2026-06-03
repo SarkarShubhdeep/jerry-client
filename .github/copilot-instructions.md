@@ -1,3 +1,14 @@
+## Jerry Client
+
+Electron desktop app for macOS — system tray, chat UI, work narratives from ActivityWatch.
+
+- **Stack**: Electron, **Next.js** (App Router), React, TypeScript, Tailwind CSS, **shadcn/ui** (gray palette, dark/light/system themes), **lucide-react**, **next-themes**, Zustand, ActivityWatch API, electron-store
+- **Docs**: See [README.md](../README.md) for architecture and v0.1 roadmap
+- **Cursor rules**: See [.cursor/rules/](../.cursor/rules/) for agent-specific conventions (IPC, Electron security, renderer constraints)
+- **Styling**: shadcn/ui components only in renderer — no raw `<button>`/`<input>`; Tailwind via shadcn tokens; Lucide for icons
+
+---
+
 ## Code Quality Principles
 
 <!-- https://github.com/mieweb/template-mieweb-opensource/blob/main/.github/copilot-instructions.md -->

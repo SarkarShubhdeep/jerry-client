@@ -1,0 +1,38 @@
+---
+description: Electron main process, preload, and IPC conventions
+globs: electron/**/*
+alwaysApply: false
+---
+
+# Electron Main Process
+
+## Security defaults
+
+```typescript
+// BrowserWindow webPreferences
+contextIsolation: true,
+nodeIntegration: false,
+sandbox: true,
+```
+
+- Expose APIs only through `contextBridge` in preload — never `remote`.
+- **Renderer** loads Next.js: dev → `http://localhost:3000`; prod → static export from `out/index.html`.
+- Do not use Next.js API routes for AW/LLM — keep those in main process.
+
+## Responsibilities
+
+| Process | Owns |
+|---------|------|
+| Main | BrowserWindow, Tray, Notification, AW HTTP, LLM calls, electron-store |
+| Preload | Typed IPC bridge (`window.jerry.*`) |
+| Renderer | UI state and user input only |
+
+## macOS behavior
+
+- Keep app running when all windows are closed (required for tray in v0.1).
+- Use `app.dock.hide()` when running as menu-bar-only app (later tickets).
+
+## IPC naming
+
+- Channels: `jerry:<domain>:<action>` (e.g. `jerry:aw:getSnapshot`)
+- Return `{ ok: true, data }` or `{ ok: false, error: string }` — avoid throwing across IPC.

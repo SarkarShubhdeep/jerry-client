@@ -1,0 +1,12 @@
+appId: com.jerry.client
+productName: Jerry
+directories:
+  output: release
+files:
+  - dist-electron/**/*
+  - out/**/*
+  - package.json
+mac:
+  category: public.app-category.productivity
+  target:
+    - dmg
