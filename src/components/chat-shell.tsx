@@ -1,10 +1,18 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { Activity, Loader2, RefreshCw, Send, Sparkles } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { Activity, ArrowUp, Loader2, Moon, RefreshCw, Settings, Sparkles, Sun, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { AwActivitySummary, IpcResult } from '@/types/activitywatch'
@@ -27,6 +35,7 @@ function formatTime(iso: string): string {
 }
 
 export function ChatShell() {
+  const { theme, setTheme } = useTheme()
   const [preset, setPreset] = useState<RangePreset>('5h')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,22 +66,69 @@ export function ChatShell() {
     setSummary(result.data)
   }, [preset])
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center gap-2 border-b px-4 py-3">
-        <Sparkles className="size-5 text-muted-foreground" aria-hidden="true" />
-        <h1 className="text-lg font-semibold tracking-tight">Jerry</h1>
-        <Badge
-          variant={summary ? 'default' : 'secondary'}
-          className="ml-auto"
-        >
-          {summary ? 'ActivityWatch connected' : 'Not checked'}
-        </Badge>
-      </header>
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
 
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-4 py-4">
-          <Card>
+  return (
+    <div className="relative flex h-screen flex-col overflow-hidden bg-background/80">
+      {/* Floating controls - positioned in the draggable title bar area */}
+      <div
+        className="fixed inset-x-0 top-0 z-50 p-3 pt-2"
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      >
+        <div className="flex items-start justify-between">
+          {/* Left: Jerry badge */}
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm ml-16"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Jerry
+          </Badge>
+
+          {/* Right: Settings dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 bg-background/90 backdrop-blur-sm"
+                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                aria-label="Settings"
+              >
+                <Settings className="size-4" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={toggleTheme}>
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="mr-2 size-4" aria-hidden="true" />
+                    Light mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="mr-2 size-4" aria-hidden="true" />
+                    Dark mode
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                Clear chat (coming soon)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Main content area with top padding for floating controls */}
+      <ScrollArea className="min-h-0 flex-1 pt-12">
+        <div className="mx-auto max-w-lg space-y-4 px-4 py-4">
+          <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm font-medium">
                 <Activity className="size-4" aria-hidden="true" />
@@ -145,7 +201,7 @@ export function ChatShell() {
                   )}
                   <ul className="space-y-1.5">
                     {summary.latest.map((item) => (
-                      <li key={item.watcher} className="rounded-md border px-2 py-1.5">
+                      <li key={item.watcher} className="rounded-md border bg-background/50 px-2 py-1.5">
                         <span className="text-muted-foreground uppercase text-xs">
                           {item.watcher}
                         </span>
@@ -171,7 +227,7 @@ export function ChatShell() {
           </Card>
 
           <div
-            className="rounded-lg border border-dashed p-6 text-center text-muted-foreground text-sm"
+            className="rounded-lg border border-dashed bg-background/50 p-6 text-center text-muted-foreground text-sm"
             role="log"
             aria-live="polite"
           >
@@ -181,16 +237,25 @@ export function ChatShell() {
         </div>
       </ScrollArea>
 
-      <footer className="flex gap-2 border-t p-3">
-        <Input
-          placeholder="Ask Jerry…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          aria-label="Message"
-        />
-        <Button type="button" size="icon" disabled aria-label="Send (coming soon)">
-          <Send className="size-4" aria-hidden="true" />
-        </Button>
+      <footer className="shrink-0 bg-background/90 backdrop-blur-sm p-3">
+        <div className="mx-auto flex max-w-lg items-center rounded-full border bg-background pl-4 pr-1.5 py-1.5">
+          <Input
+            placeholder="Ask Jerry…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            aria-label="Message"
+            className="flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+          />
+          <Button
+            type="button"
+            size="icon"
+            disabled
+            aria-label="Send (coming soon)"
+            className="size-8 shrink-0 rounded-full"
+          >
+            <ArrowUp className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
       </footer>
     </div>
   )
