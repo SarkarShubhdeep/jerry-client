@@ -17,7 +17,10 @@ Jerry is a local Electron desktop app that lives in the Mac system tray, provide
 | Layer | Technology |
 |-------|------------|
 | Desktop | Electron + electron-builder |
-| UI | React + TypeScript + Tailwind CSS |
+| UI | Next.js (App Router) + React + TypeScript |
+| Components | shadcn/ui (gray palette, dark/light/system) + lucide-react |
+| Styling | Tailwind CSS + next-themes |
+| State | Zustand |
 | Activity data | ActivityWatch API (localhost:5600) |
 | Storage | electron-store (config and rules) |
 
@@ -47,12 +50,23 @@ Jerry is a local Electron desktop app that lives in the Mac system tray, provide
 
 ## Getting started
 
-Setup instructions will be added as the project is scaffolded. For now, clone the repo:
-
 ```bash
 git clone https://github.com/SarkarShubhdeep/jerry-client.git
 cd jerry-client
+npm install
+npm run dev
 ```
+
+This starts the Next.js dev server and opens the Electron shell.
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Next.js + Electron in development |
+| `npm run build` | Build Next.js static export and Electron main |
+| `npm run start` | Run production Electron app |
+| `npm run package` | Package macOS app with electron-builder |
 
 ## License
 

@@ -1,0 +1,39 @@
+---
+description: Jerry Client project context and working principles
+alwaysApply: true
+---
+
+# Jerry Client
+
+Local Electron desktop app for macOS. Lives in the system tray, chat UI, work narratives from ActivityWatch.
+
+## Stack
+
+- Electron + electron-builder
+- **Next.js** (App Router) + React + TypeScript
+- Tailwind CSS + **shadcn/ui** (gray, dark default) + **lucide-react** + **next-themes**
+- Zustand (UI/chat state)
+- ActivityWatch HTTP API (localhost:5600)
+- electron-store for config and rules
+
+See [README.md](../../README.md) for v0.1 roadmap.
+
+## Working principles
+
+- **Minimal scope**: Smallest change that solves the ticket. No tray/chat/AW/LLM work unless the issue calls for it.
+- **DRY / KISS**: Follow [.github/copilot-instructions.md](../../.github/copilot-instructions.md) for code quality, accessibility, and PR philosophy.
+- **No secrets in repo**: API keys via `.env` only; commit `.env.example`, never `.env`.
+- **macOS-first**: Target menu bar tray and native notifications; test on macOS.
+
+## Architecture
+
+- **Main process** (`electron/`): window lifecycle, tray, notifications, native APIs, AW/LLM calls.
+- **Preload** (`electron/preload.ts`): `contextBridge` IPC only — no Node in renderer.
+- **Renderer** (`src/app/`): Next.js UI; static export loaded by Electron; no direct filesystem or shell access.
+- **No Next.js API routes** for AW/LLM — those run in Electron main via IPC.
+
+## Git workflow
+
+- `main` = stable
+- Feature branches: `feat/<short-name>` (e.g. `feat/electron-shell-setup`)
+- One PR per GitHub issue; link with `Closes #N` in the PR body.

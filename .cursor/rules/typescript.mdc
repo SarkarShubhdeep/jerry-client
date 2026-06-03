@@ -1,0 +1,30 @@
+---
+description: TypeScript standards for Jerry Client
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+## Types
+
+- Prefer explicit types on IPC payloads, service responses, and store state.
+- Avoid `any`; use `unknown` + narrowing for external data (AW API, LLM JSON).
+
+## Error handling
+
+```typescript
+// Prefer typed results over silent catches
+type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+```
+
+- Log errors in main process; surface user-friendly messages in UI.
+- Never swallow errors in IPC handlers.
+
+## Imports
+
+- Use path aliases if configured (`@/` → `src/`); otherwise relative imports within a feature folder.
+
+## Dead code
+
+- Delete unused code immediately; do not leave commented-out blocks.

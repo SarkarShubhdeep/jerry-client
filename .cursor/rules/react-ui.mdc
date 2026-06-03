@@ -1,0 +1,69 @@
+---
+description: Next.js, shadcn/ui, and Tailwind UI patterns for Jerry renderer
+globs: src/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# Next.js UI (Renderer)
+
+## Framework — Next.js App Router
+
+- Use **App Router** under `src/app/` — not Pages Router.
+- Prefer **Client Components** (`'use client'`) for interactive UI (chat, settings, theme toggle).
+- Use **Server Components** only when they add value; Electron loads static export, so most UI is client-side.
+- Do not add Next.js API routes for AW/LLM — use Electron IPC via `window.jerry`.
+
+## Component library — shadcn/ui (strict)
+
+All UI is built with [shadcn/ui](https://ui.shadcn.com/docs). Components live in `src/components/ui/`.
+
+- **Install on need only**: `npx shadcn@latest add <component>` when a feature requires it.
+- **No raw HTML controls** for interactive UI — use shadcn primitives:
+
+```tsx
+// ❌ BAD
+<button onClick={send}>Send</button>
+<input value={text} onChange={...} />
+
+// ✅ GOOD
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+<Button onClick={send}>Send</Button>
+<Input value={text} onChange={...} />
+```
+
+- Do not add custom CSS or Tailwind overrides unless the user explicitly asks for extra styling.
+- Compose features from shadcn components; modify source in `src/components/ui/` only when shadcn defaults are insufficient.
+
+## Theme
+
+- **Default**: dark
+- **Options**: `dark` | `light` | `system`
+- **Base color**: gray
+- Use `next-themes` with `ThemeProvider` in `src/app/layout.tsx`; persist preference via electron-store in main when wired up.
+
+## Icons — Lucide React
+
+- Use `lucide-react` exclusively — no other icon libraries.
+- Import named icons: `import { Send, Settings } from 'lucide-react'`
+
+## Structure
+
+```
+src/
+  app/              # Next.js routes (layout.tsx, page.tsx)
+  components/
+    ui/             # shadcn components (CLI-managed)
+    Chat/           # feature components
+  lib/utils.ts      # cn() helper
+  store/            # Zustand stores
+```
+
+## Accessibility
+
+- shadcn/Radix handle most a11y; prefer shadcn Dialog, Label, etc. over hand-rolled markup.
+- Chat messages: `role="log"` with `aria-live="polite"` for Jerry replies.
+
+## Electron renderer constraints
+
+- Call main-process features via `window.jerry` (preload), not `require` or direct localhost fetch for AW/LLM unless routed through main.
