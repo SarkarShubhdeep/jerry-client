@@ -157,16 +157,16 @@ export function ChatShell() {
                 <div className="flex items-start justify-between">
                     {/* Left: Jerry badge */}
                     <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm ml-16"
+                        variant="outline"
+                        className="flex items-center gap-1.5 bg-background/90 backdrop-blur-sm ml-16 mt-1 px-2 py-1 "
                         style={
                             {
                                 WebkitAppRegion: "no-drag",
                             } as React.CSSProperties
                         }
                     >
-                        <Sparkles className="size-3.5" aria-hidden="true" />
-                        Jerry
+                        {/* <Sparkles className="size-3.5" aria-hidden="true" /> */}
+                        Jerry <span className="text-xs font-mono">v0.1</span>
                     </Badge>
 
                     {/* Right: ActivityWatch status + Clear chat + Settings */}
@@ -246,26 +246,29 @@ export function ChatShell() {
                                                 ? "You"
                                                 : "Jerry"}
                                         </p>
-                                        {msg.role === "assistant" && msg.model && (
-                                            <Badge
-                                                variant="outline"
-                                                className="font-mono text-[10px] font-normal normal-case"
-                                                title={
-                                                    msg.api
-                                                        ? `OpenAI ${msg.api} API`
-                                                        : undefined
-                                                }
-                                            >
-                                                {getOpenAiModelLabel(msg.model)}{" "}
-                                                <span className="text-muted-foreground">
-                                                    ({msg.model}
-                                                    {msg.api
-                                                        ? ` · ${msg.api}`
-                                                        : ""}
-                                                    )
-                                                </span>
-                                            </Badge>
-                                        )}
+                                        {msg.role === "assistant" &&
+                                            msg.model && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="font-mono text-[10px] font-normal normal-case"
+                                                    title={
+                                                        msg.api
+                                                            ? `OpenAI ${msg.api} API`
+                                                            : undefined
+                                                    }
+                                                >
+                                                    {getOpenAiModelLabel(
+                                                        msg.model,
+                                                    )}{" "}
+                                                    <span className="text-muted-foreground">
+                                                        ({msg.model}
+                                                        {msg.api
+                                                            ? ` · ${msg.api}`
+                                                            : ""}
+                                                        )
+                                                    </span>
+                                                </Badge>
+                                            )}
                                     </div>
                                     <ChatMarkdown content={msg.content} />
                                 </div>

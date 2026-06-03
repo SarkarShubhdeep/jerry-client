@@ -16,7 +16,9 @@ export function AwStatusBadge() {
     const refresh = useCallback(async () => {
         if (!window.jerry?.aw?.checkConnection) {
             setStatus("unavailable");
-            setDetail("ActivityWatch status is only available in the Electron app.");
+            setDetail(
+                "ActivityWatch status is only available in the Electron app.",
+            );
             return;
         }
 
@@ -53,7 +55,7 @@ export function AwStatusBadge() {
 
     return (
         <Badge
-            variant="secondary"
+            variant="outline"
             className="flex items-center gap-1.5 bg-background/90 px-2 py-1 backdrop-blur-sm"
             title={detail}
         >
@@ -64,7 +66,10 @@ export function AwStatusBadge() {
                 />
             ) : (
                 <span
-                    className={cn("size-2 shrink-0 rounded-full", indicatorClass)}
+                    className={cn(
+                        "size-2 shrink-0 rounded-full",
+                        indicatorClass,
+                    )}
                     aria-hidden="true"
                 />
             )}
