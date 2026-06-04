@@ -1,0 +1,34 @@
+{
+  "name": "jerry-cli",
+  "version": "0.1.0",
+  "description": "Jerry CLI — stateless work reports from ActivityWatch via OpenAI",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "jerry": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x jerry dist/cli.js",
+    "start": "node dist/cli.js",
+    "jerry": "node dist/cli.js",
+    "lint": "eslint src",
+    "pack:release": "npm run build && npm pack",
+    "report": "node dist/cli.js report"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2",
+    "commander": "^13.1.0",
+    "dotenv": "^17.4.2",
+    "openai": "^6.41.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@types/node": "^22.15.21",
+    "eslint": "^9.27.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
+  }
+}

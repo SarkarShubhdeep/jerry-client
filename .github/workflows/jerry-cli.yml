@@ -1,0 +1,32 @@
+name: jerry-cli
+
+on:
+  push:
+    branches: [main, 'jerry-cli/**']
+    paths:
+      - 'jerry-cli/**'
+      - '.github/workflows/jerry-cli.yml'
+  pull_request:
+    paths:
+      - 'jerry-cli/**'
+      - '.github/workflows/jerry-cli.yml'
+
+defaults:
+  run:
+    working-directory: jerry-cli
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: jerry-cli/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: node dist/cli.js --help
+      - run: node dist/cli.js config show

@@ -35,6 +35,19 @@ Get the latest **macOS .dmg** from [GitHub Releases](https://github.com/SarkarSh
 4. Confirm the **AW** badge is green.
 5. Try: *What have I been working on today?*
 
+## Jerry CLI (experimental v0.1)
+
+A **standalone** command-line tool in [`jerry-cli/`](jerry-cli/) for stateless work reports (ActivityWatch + OpenAI → `.md` files). It does **not** use or require the Electron app.
+
+```bash
+cd jerry-cli
+npm install && npm run build
+export OPENAI_API_KEY=sk-...
+./jerry report "give me report of my past hour work"
+```
+
+See [jerry-cli/README.md](jerry-cli/README.md) for config, branching (`jerry-cli/main`), and release tarball (`npm run pack:release`). Tracking issues: [#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12).
+
 ## Develop from source
 
 ```bash

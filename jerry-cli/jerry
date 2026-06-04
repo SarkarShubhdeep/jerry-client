@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "$ROOT/dist/cli.js" ]]; then
+  echo "jerry-cli: run npm run build first (dist/cli.js missing)" >&2
+  exit 1
+fi
+exec node "$ROOT/dist/cli.js" "$@"
