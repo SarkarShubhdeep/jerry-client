@@ -26,6 +26,45 @@ export class Spinner {
     }
   }
 
+  /** Permanent stderr line when a phase finishes (spinner keeps running). */
+  markStep(label: string): void {
+    if (this.tty && this.interval) {
+      process.stderr.write(`\r\x1b[2Kjerry: ✓ ${label}\n`)
+    } else if (!this.tty) {
+      process.stderr.write(`jerry: ✓ ${label}\n`)
+    }
+  }
+
+  /** Pause spinner for interactive prompts; call `resume` after. */
+  pause(): void {
+    if (this.interval) {
+      clearInterval(this.interval)
+      this.interval = undefined
+    }
+    if (this.tty) {
+      process.stderr.write('\r\x1b[2K')
+    }
+  }
+
+  resume(label?: string): void {
+    if (label) {
+      this.label = label
+    }
+    if (!this.tty) {
+      if (label) {
+        process.stderr.write(`jerry: ${label}\n`)
+      }
+      return
+    }
+    if (!this.interval) {
+      this.render()
+      this.interval = setInterval(() => {
+        this.frameIndex = (this.frameIndex + 1) % FRAMES.length
+        this.render()
+      }, 90)
+    }
+  }
+
   stop(finalMessage?: string): void {
     if (this.interval) {
       clearInterval(this.interval)

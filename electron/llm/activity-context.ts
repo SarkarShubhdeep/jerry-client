@@ -26,7 +26,11 @@ export function formatActivityContext(summary: AwActivitySummary): string {
   const lines: string[] = [
     '## ActivityWatch data (local, read-only)',
     '',
-    `Time range: ${summary.range.start} to ${summary.range.end} (${summary.rangeHours}h window)`,
+    summary.rangeLabel
+      ? `Requested window: ${summary.rangeLabel}`
+      : `Time range: ${summary.range.start} to ${summary.range.end}`,
+    `Time range (ISO): ${summary.range.start} to ${summary.range.end}`,
+    `Span: ${summary.rangeHours.toFixed(2)}h`,
     `Total events in range: ${summary.totalEventCount}`,
     `Events per watcher: ${formatWatcherCounts(summary.eventCounts)}`,
   ]

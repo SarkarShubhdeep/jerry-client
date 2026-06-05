@@ -64,6 +64,10 @@ jerry config remove openai-api-key
 ## Commands
 
 ```bash
+jerry ask "what is the difference between async and await?"
+jerry report "yesterday's work"
+jerry report "May 10 to May 13 this year"
+jerry report "June 1st"
 jerry report "give me report of my past hour work"
 jerry report --hours 2 "what did I work on"
 jerry report --dry-run "today"          # AW context only, no LLM
@@ -76,7 +80,11 @@ jerry config remove openai-api-key
 
 While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the current step.
 
-Each `report` run is isolated: **no chat history** and prior `.md` files are not sent to the model.
+`ask` uses the same API key and model as `report` but does not read ActivityWatch. When the model uses web search, stderr shows `Searching web…` then `✓ Searched web`.
+
+`report` only loads ActivityWatch for a **time range in your prompt** (e.g. `June 1`, `May 10 to May 13`, `yesterday`, `last 2 hours`, or `--hours`). A prompt with no range fails with examples.
+
+Each `ask` and `report` run is isolated: **no chat history**.
 
 ## Release tarball
 

@@ -1,15 +1,18 @@
 import os from 'os'
 import {
+  aggregateMeetingSessions,
   aggregateTopActivities,
   aggregateTopWebLinks,
   mergeTopActivities,
 } from './aggregate.js'
+import { filterEventsInRange } from './event-range.js'
 import type {
   AwActivityResult,
   Bucket,
   LatestWatcherEvent,
   RawEvent,
   TopActivity,
+  MeetingSession,
   WebLinkActivity,
   WatcherKind,
 } from './types.js'
@@ -76,8 +79,8 @@ export async function checkActivityWatchConnection(): Promise<AwConnectionStatus
   }
 }
 
-async function fetchBuckets(): Promise<Bucket[]> {
-  const res = await awFetch('/buckets')
+export async function listActivityWatchBuckets(): Promise<Bucket[]> {
+  const res = await awFetch('/buckets/')
   if (!res.ok) {
     throw new Error(`ActivityWatch buckets request failed (${res.status})`)
   }
@@ -87,6 +90,8 @@ async function fetchBuckets(): Promise<Bucket[]> {
     type: b.type,
     client: b.client,
     hostname: b.hostname,
+    created: b.created,
+    last_updated: b.last_updated,
   }))
 }
 
@@ -202,17 +207,23 @@ function newestEvent(events: RawEvent[]): RawEvent | undefined {
   )
 }
 
+export type ActivityFetchRange = {
+  start: Date
+  end: Date
+  label: string
+}
+
 export async function fetchActivitySummary(
-  rangeHours: number
+  range: ActivityFetchRange
 ): Promise<AwActivityResult> {
-  const hours = Math.min(Math.max(rangeHours, 0.25), 168)
-  const end = new Date()
-  const start = new Date(end.getTime() - hours * 60 * 60 * 1000)
+  const start = range.start
+  const end = range.end
+  const hours = Math.max((end.getTime() - start.getTime()) / (60 * 60 * 1000), 0.25)
   const startIso = start.toISOString()
   const endIso = end.toISOString()
 
   try {
-    const buckets = await fetchBuckets()
+    const buckets = await listActivityWatchBuckets()
     if (buckets.length === 0) {
       return { connected: false, error: 'No ActivityWatch buckets found. Is a watcher running?' }
     }
@@ -220,6 +231,7 @@ export async function fetchActivitySummary(
     const latest: LatestWatcherEvent[] = []
     const perWatcherTop: TopActivity[] = []
     let topWebLinks: WebLinkActivity[] = []
+    let meetingSessions: MeetingSession[] = []
     const eventCounts: Partial<Record<WatcherKind, number>> = {}
     const eventFetchPages: Partial<Record<WatcherKind, number>> = {}
     let afk: { status: string; timestamp: string } | null = null
@@ -230,11 +242,12 @@ export async function fetchActivitySummary(
         const bucket = pickBucket(buckets, watcher)
         if (!bucket) return
 
-        const { events, pages } = await fetchAllEventsInRange(
+        const { events: rawEvents, pages } = await fetchAllEventsInRange(
           bucket.id,
           startIso,
           endIso
         )
+        const events = filterEventsInRange(rawEvents, startIso, endIso)
         totalApiCalls += pages
         eventCounts[watcher] = events.length
         eventFetchPages[watcher] = pages
@@ -242,6 +255,7 @@ export async function fetchActivitySummary(
         perWatcherTop.push(...aggregateTopActivities(events, watcher))
         if (watcher === 'web') {
           topWebLinks = aggregateTopWebLinks(events)
+          meetingSessions = aggregateMeetingSessions(events)
         }
 
         const newest = newestEvent(events)
@@ -277,11 +291,13 @@ export async function fetchActivitySummary(
       connected: true,
       bucketCount: buckets.length,
       rangeHours: hours,
+      rangeLabel: range.label,
       range: { start: startIso, end: endIso },
       afk,
       latest,
       topActivities,
       topWebLinks,
+      meetingSessions,
       eventCounts,
       eventFetchPages,
       totalEventCount,

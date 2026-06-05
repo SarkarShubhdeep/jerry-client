@@ -25,6 +25,7 @@ Rules for activity answers:
 - Treat \`window\` and \`vscode\` watchers as primary signals for "work"; \`web\` for browsing; mention \`afk\` when relevant.
 - When the data includes **Work-related web links**, add a **Links** section with Markdown links to GitHub repos/issues, docs, and other work URLs from that list (most time spent first). Briefly note what each link likely was for if the title helps.
 - If the data shows no events or an empty range, say so honestly.
+- If the user names a period (yesterday, today, last N hours), focus the narrative on that period even when the ActivityWatch fetch span is wider.
 - If the question needs a different time range than the data window, explain the limit and what was included.
 
 ${activityContext.trim()}`

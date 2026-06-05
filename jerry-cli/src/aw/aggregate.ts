@@ -1,4 +1,11 @@
-import type { RawEvent, TopActivity, WatcherKind, WebLinkActivity } from './types.js'
+import type {
+  MeetingPlatform,
+  MeetingSession,
+  RawEvent,
+  TopActivity,
+  WatcherKind,
+  WebLinkActivity,
+} from './types.js'
 
 const TOP_ACTIVITIES_LIMIT = 20
 const TOP_WEB_LINKS_LIMIT = 25
@@ -165,5 +172,152 @@ export function aggregateTopWebLinks(
 
   return [...totals.values()]
     .sort((a, b) => b.durationSeconds - a.durationSeconds)
+    .slice(0, limit)
+}
+
+const MEETING_GAP_MS = 10 * 60 * 1000
+const MEETING_SESSION_LIMIT = 12
+
+type MeetingHostRule = { host: string; platform: MeetingPlatform }
+
+const MEETING_HOSTS: MeetingHostRule[] = [
+  { host: 'meet.google.com', platform: 'google-meet' },
+  { host: 'zoom.us', platform: 'zoom' },
+  { host: 'teams.microsoft.com', platform: 'teams' },
+  { host: 'teams.live.com', platform: 'teams' },
+]
+
+function meetingPlatformFromUrl(url: string): MeetingPlatform | null {
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    const rule = MEETING_HOSTS.find(
+      (r) => host === r.host || host.endsWith(`.${r.host}`)
+    )
+    return rule?.platform ?? null
+  } catch {
+    return null
+  }
+}
+
+function meetingSessionKey(url: string, platform: MeetingPlatform): string {
+  try {
+    const parsed = new URL(url)
+    parsed.hash = ''
+    if (platform === 'google-meet') {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      if (parts.length > 0) {
+        return `google-meet:${parts[parts.length - 1]}`
+      }
+    }
+    if (platform === 'zoom') {
+      return `zoom:${parsed.pathname}`
+    }
+    return `${platform}:${parsed.origin}${parsed.pathname}`
+  } catch {
+    return url
+  }
+}
+
+function meetingCodeFromUrl(url: string, platform: MeetingPlatform): string | undefined {
+  try {
+    const parsed = new URL(url)
+    if (platform === 'google-meet') {
+      const parts = parsed.pathname.split('/').filter(Boolean)
+      const code = parts[parts.length - 1]
+      return code && code.length > 2 ? code : undefined
+    }
+    if (platform === 'zoom') {
+      const m = parsed.pathname.match(/\/j\/(\d+)/)
+      return m?.[1]
+    }
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+
+type MeetingEventSlice = {
+  platform: MeetingPlatform
+  url: string
+  title: string
+  startMs: number
+  endMs: number
+}
+
+export function aggregateMeetingSessions(
+  events: readonly RawEvent[],
+  limit: number = MEETING_SESSION_LIMIT
+): MeetingSession[] {
+  const slices: MeetingEventSlice[] = []
+
+  for (const event of events) {
+    const rawUrl = event.data?.url
+    if (typeof rawUrl !== 'string' || !rawUrl.startsWith('http')) {
+      continue
+    }
+    const platform = meetingPlatformFromUrl(rawUrl)
+    if (!platform) continue
+
+    const url = normalizeWebUrl(rawUrl)
+    const startMs = new Date(event.timestamp).getTime()
+    const durationMs = Math.max(0, (event.duration ?? 0) * 1000)
+    const endMs = startMs + durationMs
+
+    slices.push({
+      platform,
+      url,
+      title: pageTitleFromWebEvent(event, url),
+      startMs,
+      endMs: durationMs > 0 ? endMs : startMs + 60_000,
+    })
+  }
+
+  slices.sort((a, b) => a.startMs - b.startMs)
+
+  const byKey = new Map<string, MeetingEventSlice[][]>()
+
+  for (const slice of slices) {
+    const key = meetingSessionKey(slice.url, slice.platform)
+    const groups = byKey.get(key) ?? []
+    const lastGroup = groups[groups.length - 1]
+    const lastSlice = lastGroup?.[lastGroup.length - 1]
+
+    if (!lastGroup || !lastSlice || slice.startMs - lastSlice.endMs > MEETING_GAP_MS) {
+      groups.push([slice])
+      byKey.set(key, groups)
+    } else {
+      lastGroup.push(slice)
+    }
+  }
+
+  const sessions: MeetingSession[] = []
+
+  for (const groups of byKey.values()) {
+    for (const group of groups) {
+      const startMs = group[0].startMs
+      const endMs = Math.max(...group.map((g) => g.endMs))
+      const url = group[0].url
+      const platform = group[0].platform
+      const title =
+        group
+          .map((g) => g.title)
+          .filter((t) => t && !t.startsWith('http'))
+          .sort((a, b) => b.length - a.length)[0] ?? group[0].title
+
+      sessions.push({
+        platform,
+        url,
+        meetingCode: meetingCodeFromUrl(url, platform),
+        title,
+        start: new Date(startMs).toISOString(),
+        end: new Date(endMs).toISOString(),
+        durationSeconds: Math.max(1, Math.round((endMs - startMs) / 1000)),
+        eventCount: group.length,
+      })
+    }
+  }
+
+  return sessions
+    .sort((a, b) => new Date(b.start).getTime() - new Date(a.start).getTime())
     .slice(0, limit)
 }

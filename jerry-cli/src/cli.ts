@@ -3,6 +3,7 @@ import { config as loadDotenv } from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { Command } from 'commander'
+import { runAsk } from './commands/ask.js'
 import { runReport } from './commands/report.js'
 import {
   removeConfig,
@@ -18,8 +19,22 @@ const pkg = { version: '0.1.0' }
 
 const program = new Command()
   .name('jerry')
-  .description('Jerry CLI — stateless work reports from ActivityWatch')
+  .description('Jerry CLI — ActivityWatch work reports and LLM chat')
   .version(pkg.version)
+
+program
+  .command('ask')
+  .description('Ask the configured OpenAI model a question (no ActivityWatch)')
+  .argument('[question...]', 'Your question')
+  .action(async (parts: string[]) => {
+    try {
+      await runAsk(parts.join(' '))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`jerry: ${message}`)
+      process.exitCode = 1
+    }
+  })
 
 program
   .command('report')

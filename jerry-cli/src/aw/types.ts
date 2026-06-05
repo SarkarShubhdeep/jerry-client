@@ -5,6 +5,8 @@ export type Bucket = {
   type?: string
   client?: string
   hostname?: string
+  created?: string
+  last_updated?: string
 }
 
 export type RawEvent = {
@@ -37,15 +39,34 @@ export type WebLinkActivity = {
   eventCount: number
 }
 
+export type MeetingPlatform = 'google-meet' | 'zoom' | 'teams' | 'other'
+
+/** Video call session inferred from web watcher events. */
+export type MeetingSession = {
+  platform: MeetingPlatform
+  url: string
+  /** Meet code, Zoom path id, etc. when parseable */
+  meetingCode?: string
+  /** Browser tab title from ActivityWatch when available */
+  title: string
+  start: string
+  end: string
+  durationSeconds: number
+  eventCount: number
+}
+
 export type AwActivitySummary = {
   connected: true
   bucketCount: number
   rangeHours: number
+  /** e.g. "Yesterday (full calendar day, local time)" */
+  rangeLabel: string
   range: { start: string; end: string }
   afk: { status: string; timestamp: string } | null
   latest: LatestWatcherEvent[]
   topActivities: TopActivity[]
   topWebLinks: WebLinkActivity[]
+  meetingSessions: MeetingSession[]
   eventCounts: Partial<Record<WatcherKind, number>>
   eventFetchPages: Partial<Record<WatcherKind, number>>
   totalEventCount: number

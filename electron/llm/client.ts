@@ -3,12 +3,13 @@ import type { EasyInputMessage } from 'openai/resources/responses/responses'
 import {
   checkActivityWatchConnection,
   fetchActivitySummary,
+  listActivityWatchBuckets,
 } from '../aw/client'
 import { formatActivityContext } from './activity-context'
 import {
   lastUserMessage,
   needsActivityContext,
-  parseActivityRangeHours,
+  resolveActivityRange,
 } from './activity-intent'
 import { buildJerrySystemPrompt } from './prompt'
 import type { LlmStatusCallback, LlmStatusUpdate } from './status'
@@ -58,8 +59,11 @@ async function resolveActivityContext(
     )
   }
 
-  const rangeHours = parseActivityRangeHours(userText)
-  const summary = await fetchActivitySummary(rangeHours)
+  const buckets = await listActivityWatchBuckets()
+  const activityRange = resolveActivityRange(userText, undefined, buckets, {
+    strict: false,
+  })
+  const summary = await fetchActivitySummary(activityRange)
   if (!summary.connected) {
     throw new Error(summary.error)
   }

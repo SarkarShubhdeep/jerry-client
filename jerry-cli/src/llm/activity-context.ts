@@ -1,4 +1,5 @@
-import type { AwActivitySummary, WatcherKind } from '../aw/types.js'
+import { formatLocalTimeRange } from '../aw/time-format.js'
+import type { AwActivitySummary, MeetingSession, WatcherKind } from '../aw/types.js'
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) {
@@ -22,17 +23,42 @@ function formatWatcherCounts(
   return parts.length > 0 ? parts.join(', ') : 'none'
 }
 
+function formatMeetingLine(session: MeetingSession): string {
+  const when = formatLocalTimeRange(session.start, session.end)
+  const titlePart =
+    session.title && !session.title.startsWith('http')
+      ? ` — title: "${session.title.replace(/"/g, "'")}"`
+      : ''
+  const codePart = session.meetingCode
+    ? ` — code: ${session.meetingCode}`
+    : ''
+  return `- [${session.platform}] ${when}${titlePart}${codePart} (${formatDuration(session.durationSeconds)}, ${session.url})`
+}
+
 export function formatActivityContext(summary: AwActivitySummary): string {
   const lines: string[] = [
     '## ActivityWatch data (local, read-only)',
     '',
-    `Time range: ${summary.range.start} to ${summary.range.end} (${summary.rangeHours}h window)`,
+    `Requested window: ${summary.rangeLabel}`,
+    `Time range (ISO): ${summary.range.start} to ${summary.range.end}`,
+    `Span: ${summary.rangeHours.toFixed(2)}h`,
     `Total events in range: ${summary.totalEventCount}`,
     `Events per watcher: ${formatWatcherCounts(summary.eventCounts)}`,
   ]
 
   if (summary.afk) {
     lines.push(`AFK status (latest): ${summary.afk.status} at ${summary.afk.timestamp}`)
+  }
+
+  if (summary.meetingSessions.length > 0) {
+    lines.push(
+      '',
+      '### Video meetings (web watcher)',
+      'Each line has local start–end time, tab title when known, and meet code when parseable. Use these exact times when asking the user about a meeting.'
+    )
+    for (const session of summary.meetingSessions) {
+      lines.push(formatMeetingLine(session))
+    }
   }
 
   if (summary.totalEventCount === 0) {
@@ -73,7 +99,7 @@ export function formatActivityContext(summary: AwActivitySummary): string {
 
   lines.push(
     '',
-    'Use only the data above for activity and work questions. Do not invent apps, URLs, or durations not listed. When work-related web links are present, add a **Links** section with the most relevant GitHub/repos/docs URLs from that list. If the user asks about a period outside this range, say so.'
+    'Use only the data above. When work-related web links are present, reference them inline in chronological context and repeat them in a final **Links** section (most time spent first). If the user asks about a period outside this range, say so.'
   )
 
   return lines.join('\n')

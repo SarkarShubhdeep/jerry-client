@@ -32,6 +32,7 @@ export type AwActivitySummary = {
   connected: true
   bucketCount: number
   rangeHours: number
+  rangeLabel?: string
   range: { start: string; end: string }
   afk: { status: string; timestamp: string } | null
   latest: LatestWatcherEvent[]
