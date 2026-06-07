@@ -1,5 +1,7 @@
 # Jerry CLI (v0.1 experimental)
 
+**Demo:** [Watch the Jerry CLI intro (YouTube Short)](https://youtube.com/shorts/_uOKAzkYQCI?si=HxvVj9MbRIvwimyT)
+
 Headless, **stateless** work reports from [ActivityWatch](https://activitywatch.net/) and OpenAI. Independent of the Jerry desktop (Electron) app — same repo, no shared runtime dependency.
 
 ## Requirements
@@ -17,21 +19,23 @@ npm run build
 export OPENAI_API_KEY=sk-...   # required for reports
 ```
 
-The `jerry` command is **not** on your PATH until you link it globally. Use any of these from the `jerry-cli/` directory:
+From the `jerry-cli/` directory, use **`./jerry`** (the wrapper script in this folder). That is the normal way to run the CLI during development — you do **not** need a global `jerry` on your PATH.
 
 ```bash
-./jerry report "give me report of my past hour work"     # wrapper script (recommended)
+./jerry report "give me report of my past hour work"     # recommended
 npm run jerry -- report "give me report of my past hour work"
 npm run report -- "give me report of my past hour work"
 node dist/cli.js report "give me report of my past hour work"
 ```
 
-For a global `jerry` command everywhere:
+**Optional — global `jerry` command:** run `npm link` once from `jerry-cli/`, then you can use `jerry` from any directory:
 
 ```bash
 npm link
 jerry report "give me report of my past hour work"
 ```
+
+Throughout this README, `./jerry` means “from inside `jerry-cli/`”. After `npm link`, substitute `jerry` instead.
 
 ## Configure
 
@@ -48,10 +52,10 @@ Settings are stored in `~/.config/jerry/cli.json` (mode `0600`). Environment var
 Non-interactive (for scripts):
 
 ```bash
-jerry config show
-jerry config set openai-api-key sk-...
-jerry config set reports-dir ~/Documents/jerry-reports
-jerry config remove openai-api-key
+./jerry config show
+./jerry config set openai-api-key sk-...
+./jerry config set reports-dir ~/Documents/jerry-reports
+./jerry config remove openai-api-key
 ```
 
 | Setting | Config key | Env override |
@@ -63,19 +67,21 @@ jerry config remove openai-api-key
 
 ## Commands
 
+Run from `jerry-cli/` with `./jerry` (or `jerry` if you ran `npm link`):
+
 ```bash
-jerry ask "what is the difference between async and await?"
-jerry report "yesterday's work"
-jerry report "May 10 to May 13 this year"
-jerry report "June 1st"
-jerry report "give me report of my past hour work"
-jerry report --hours 2 "what did I work on"
-jerry report --dry-run "today"          # AW context only, no LLM
-jerry report --stdout "last hour"       # print markdown, no file
-jerry config                            # show settings (masked)
-jerry config set openai-api-key
-jerry config set reports-dir ~/Documents/jerry-reports
-jerry config remove openai-api-key
+./jerry ask "what is the difference between async and await?"
+./jerry report "yesterday's work"
+./jerry report "May 10 to May 13 this year"
+./jerry report "June 1st"
+./jerry report "give me report of my past hour work"
+./jerry report --hours 2 "what did I work on"
+./jerry report --dry-run "today"          # AW context only, no LLM
+./jerry report --stdout "last hour"       # print markdown, no file
+./jerry config                            # interactive settings menu
+./jerry config set openai-api-key
+./jerry config set reports-dir ~/Documents/jerry-reports
+./jerry config remove openai-api-key
 ```
 
 While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the current step.

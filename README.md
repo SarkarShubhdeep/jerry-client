@@ -37,6 +37,8 @@ Get the latest **macOS .dmg** from [GitHub Releases](https://github.com/SarkarSh
 
 ## Jerry CLI (experimental v0.1)
 
+**Demo:** [Watch the Jerry CLI intro (YouTube Short)](https://youtube.com/shorts/_uOKAzkYQCI?si=HxvVj9MbRIvwimyT)
+
 A **standalone** command-line tool in [`jerry-cli/`](jerry-cli/) for stateless work reports (ActivityWatch + OpenAI → `.md` files). It does **not** use or require the Electron app.
 
 ```bash
@@ -46,7 +48,9 @@ export OPENAI_API_KEY=sk-...
 ./jerry report "give me report of my past hour work"
 ```
 
-See [jerry-cli/README.md](jerry-cli/README.md) for config, branching (`jerry-cli/main`), and release tarball (`npm run pack:release`). Tracking issues: [#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12).
+Use **`./jerry`** from inside `jerry-cli/` (the local wrapper script). A global `jerry` command is optional — run `npm link` in `jerry-cli/` if you want it on your PATH.
+
+See [jerry-cli/README.md](jerry-cli/README.md) for config, `ask`, calendar date ranges, branching (`jerry-cli/main`), and release tarball (`npm run pack:release`). Tracking issues: [#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12).
 
 ## Develop from source
 
