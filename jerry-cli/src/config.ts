@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './llm/models.js'
+import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './llm/models.ts'
 
 export type JerryCliConfig = {
   openaiApiKey: string

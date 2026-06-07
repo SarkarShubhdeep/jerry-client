@@ -9,9 +9,9 @@ import {
   setConfigValue,
   settingLabel,
   type ConfigSetting,
-} from '../config.js'
-import { promptLine, promptSecret } from '../prompt.js'
-import { clearTerminal, pauseEnter } from '../terminal.js'
+} from '../config.ts'
+import { promptLine, promptSecret } from '../prompt.ts'
+import { clearTerminal, pauseEnter } from '../terminal.ts'
 
 function printConfigSummary(): void {
   const cfg = loadConfig()
@@ -108,13 +108,13 @@ export async function runConfigMenu(): Promise<void> {
       },
     ].filter(choice => !choice.value.startsWith('__disabled'))
 
-    const action = await Select.prompt<MenuAction>({
+    const action = await Select.prompt({
       message: 'Choose an option (↑↓ navigate, Enter select)',
       options: choices.filter(c => !c.value.startsWith('__separator')).map(c => ({
         name: c.name,
         value: c.value as MenuAction,
       })),
-    })
+    }) as MenuAction
 
     if (action === 'exit') {
       clearTerminal()

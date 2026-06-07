@@ -1,7 +1,7 @@
-import { loadConfig } from '../config.js'
-import { askQuestion } from '../llm/client.js'
-import type { LlmStatusUpdate } from '../llm/status.js'
-import { Spinner } from '../spinner.js'
+import { loadConfig } from '../config.ts'
+import { askQuestion } from '../llm/client.ts'
+import type { LlmStatusUpdate } from '../llm/status.ts'
+import { Spinner } from '../spinner.ts'
 
 function bindSpinnerProgress(spinner: Spinner): {
   onStatus: (update: LlmStatusUpdate) => void

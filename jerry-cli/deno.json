@@ -1,8 +1,8 @@
 {
   "version": "0.1.0",
   "tasks": {
-    "jerry": "deno run --allow-read --allow-write --allow-net --allow-env src/cli.ts",
-    "report": "deno run --allow-read --allow-write --allow-net --allow-env src/cli.ts report",
+    "jerry": "deno run --allow-read --allow-write --allow-net --allow-env --allow-sys src/cli.ts",
+    "report": "deno run --allow-read --allow-write --allow-net --allow-env --allow-sys src/cli.ts report",
     "build": "deno cache --check src/cli.ts",
     "lint": "deno lint src",
     "fmt": "deno fmt src",
@@ -10,8 +10,7 @@
   },
   "compilerOptions": {
     "strict": true,
-    "lib": ["deno.window", "deno.ns"],
-    "allowJs": false
+    "lib": ["deno.window", "deno.ns"]
   },
   "imports": {
     "@cliffy/prompt": "jsr:@cliffy/prompt@^1.0.0-rc.7",

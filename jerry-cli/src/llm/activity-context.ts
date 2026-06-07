@@ -1,5 +1,5 @@
-import { formatLocalTimeRange } from '../aw/time-format.js'
-import type { AwActivitySummary, MeetingSession, WatcherKind } from '../aw/types.js'
+import { formatLocalTimeRange } from '../aw/time-format.ts'
+import type { AwActivitySummary, MeetingSession, WatcherKind } from '../aw/types.ts'
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) {

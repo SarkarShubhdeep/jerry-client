@@ -1,4 +1,4 @@
-import type { RawEvent } from './types.js'
+import type { RawEvent } from './types.ts'
 
 /** Keep only events whose timestamp falls in [start, end). */
 export function filterEventsInRange(

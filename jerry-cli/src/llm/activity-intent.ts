@@ -1,8 +1,8 @@
-import type { Bucket } from '../aw/types.js'
+import type { Bucket } from '../aw/types.ts'
 import {
   NO_TIME_RANGE_ERROR,
   parseCalendarRangeFromPrompt,
-} from './activity-dates.js'
+} from './activity-dates.ts'
 
 const MAX_EXPLICIT_HOURS = 24 * 90
 

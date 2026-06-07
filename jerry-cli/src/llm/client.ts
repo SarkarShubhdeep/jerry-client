@@ -3,17 +3,17 @@ import type { EasyInputMessage } from 'openai/resources/responses/responses'
 import {
   checkActivityWatchConnection,
   fetchActivitySummary,
-} from '../aw/client.js'
-import { formatActivityContext } from './activity-context.js'
-import { type ActivityTimeRange } from './activity-intent.js'
+} from '../aw/client.ts'
+import { formatActivityContext } from './activity-context.ts'
+import { type ActivityTimeRange } from './activity-intent.ts'
 import {
   buildAskSystemPrompt,
   buildJerrySystemPrompt,
   buildRecheckSystemPrompt,
-} from './prompt.js'
-import type { LlmStatusCallback, LlmStatusUpdate } from './status.js'
-import type { ChatMessage, ChatResponse } from './types.js'
-import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './models.js'
+} from './prompt.ts'
+import type { LlmStatusCallback, LlmStatusUpdate } from './status.ts'
+import type { ChatMessage, ChatResponse } from './types.ts'
+import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './models.ts'
 
 export type JerryCliLlmConfig = {
   apiKey: string

@@ -4,8 +4,8 @@ import {
   aggregateTopActivities,
   aggregateTopWebLinks,
   mergeTopActivities,
-} from './aggregate.js'
-import { filterEventsInRange } from './event-range.js'
+} from './aggregate.ts'
+import { filterEventsInRange } from './event-range.ts'
 import type {
   AwActivityResult,
   Bucket,
@@ -15,7 +15,7 @@ import type {
   MeetingSession,
   WebLinkActivity,
   WatcherKind,
-} from './types.js'
+} from './types.ts'
 
 const DEFAULT_BASE_URL = 'http://localhost:5600/api/0'
 const WATCHERS: WatcherKind[] = ['window', 'web', 'vscode', 'afk']

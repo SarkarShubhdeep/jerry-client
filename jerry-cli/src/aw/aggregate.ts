@@ -5,7 +5,7 @@ import type {
   TopActivity,
   WatcherKind,
   WebLinkActivity,
-} from './types.js'
+} from './types.ts'
 
 const TOP_ACTIVITIES_LIMIT = 20
 const TOP_WEB_LINKS_LIMIT = 25

@@ -4,17 +4,17 @@ import {
   checkActivityWatchConnection,
   fetchActivitySummary,
   listActivityWatchBuckets,
-} from '../aw/client.js'
-import { formatActivityContext } from '../llm/activity-context.js'
-import { generateReport } from '../llm/client.js'
+} from '../aw/client.ts'
+import { formatActivityContext } from '../llm/activity-context.ts'
+import { generateReport } from '../llm/client.ts'
 import {
   formatActivityWindowLog,
   resolveActivityRange,
   resolveRangeHours,
   type ActivityTimeRange,
-} from '../llm/activity-intent.js'
-import { ensureReportsDir, loadConfig, type JerryCliConfig } from '../config.js'
-import { Spinner } from '../spinner.js'
+} from '../llm/activity-intent.ts'
+import { ensureReportsDir, loadConfig, type JerryCliConfig } from '../config.ts'
+import { Spinner } from '../spinner.ts'
 
 export type ReportOptions = {
   prompt: string
