@@ -1,15 +1,17 @@
 const FRAMES = ['-', '\\', '|', '/'] as const
 
+const encoder = new TextEncoder()
+
 export class Spinner {
   private interval: ReturnType<typeof setInterval> | undefined
   private frameIndex = 0
   private label = ''
-  private readonly tty = Boolean(process.stderr.isTTY)
+  private readonly tty = Deno.stderr.isTerminal()
 
   start(label: string): void {
     this.label = label
     if (!this.tty) {
-      process.stderr.write(`jerry: ${label}\n`)
+      Deno.stderr.writeSync(encoder.encode(`jerry: ${label}\n`))
       return
     }
     this.render()
@@ -22,16 +24,16 @@ export class Spinner {
   update(label: string): void {
     this.label = label
     if (!this.tty) {
-      process.stderr.write(`jerry: ${label}\n`)
+      Deno.stderr.writeSync(encoder.encode(`jerry: ${label}\n`))
     }
   }
 
   /** Permanent stderr line when a phase finishes (spinner keeps running). */
   markStep(label: string): void {
     if (this.tty && this.interval) {
-      process.stderr.write(`\r\x1b[2Kjerry: ✓ ${label}\n`)
+      Deno.stderr.writeSync(encoder.encode(`\r\x1b[2Kjerry: ✓ ${label}\n`))
     } else if (!this.tty) {
-      process.stderr.write(`jerry: ✓ ${label}\n`)
+      Deno.stderr.writeSync(encoder.encode(`jerry: ✓ ${label}\n`))
     }
   }
 
@@ -42,7 +44,7 @@ export class Spinner {
       this.interval = undefined
     }
     if (this.tty) {
-      process.stderr.write('\r\x1b[2K')
+      Deno.stderr.writeSync(encoder.encode('\r\x1b[2K'))
     }
   }
 
@@ -52,7 +54,7 @@ export class Spinner {
     }
     if (!this.tty) {
       if (label) {
-        process.stderr.write(`jerry: ${label}\n`)
+        Deno.stderr.writeSync(encoder.encode(`jerry: ${label}\n`))
       }
       return
     }
@@ -71,15 +73,15 @@ export class Spinner {
       this.interval = undefined
     }
     if (this.tty) {
-      process.stderr.write('\r\x1b[2K')
+      Deno.stderr.writeSync(encoder.encode('\r\x1b[2K'))
     }
     if (finalMessage) {
-      process.stderr.write(`jerry: ${finalMessage}\n`)
+      Deno.stderr.writeSync(encoder.encode(`jerry: ${finalMessage}\n`))
     }
   }
 
   private render(): void {
     const frame = FRAMES[this.frameIndex]
-    process.stderr.write(`\r\x1b[2Kjerry: ${frame} ${this.label}`)
+    Deno.stderr.writeSync(encoder.encode(`\r\x1b[2Kjerry: ${frame} ${this.label}`))
   }
 }

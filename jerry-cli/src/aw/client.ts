@@ -1,4 +1,4 @@
-import os from 'os'
+import os from 'node:os'
 import {
   aggregateMeetingSessions,
   aggregateTopActivities,
@@ -24,7 +24,7 @@ export const EVENT_PAGE_SIZE = 1000
 const MAX_PAGES_PER_BUCKET = 50
 
 function baseUrl(): string {
-  const url = process.env.ACTIVITYWATCH_BASE_URL || DEFAULT_BASE_URL
+  const url = Deno.env.get('ACTIVITYWATCH_BASE_URL') || DEFAULT_BASE_URL
   return url.replace(/\/+$/, '')
 }
 

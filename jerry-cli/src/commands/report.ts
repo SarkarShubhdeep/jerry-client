@@ -1,5 +1,5 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import {
   checkActivityWatchConnection,
   fetchActivitySummary,
@@ -65,8 +65,9 @@ export async function runReport(options: ReportOptions): Promise<string> {
     const buckets = await listActivityWatchBuckets()
     const activityRange = resolveActivityRange(prompt, options.hours, buckets)
     const rangeHours = resolveRangeHours(prompt, options.hours, buckets)
-    process.stderr.write(
-      `jerry: ActivityWatch window: ${formatActivityWindowLog(activityRange)}\n`
+    const encoder = new TextEncoder()
+    Deno.stderr.writeSync(
+      encoder.encode(`jerry: ActivityWatch window: ${formatActivityWindowLog(activityRange)}\n`)
     )
 
     if (options.dryRun) {
@@ -110,7 +111,8 @@ export async function runReport(options: ReportOptions): Promise<string> {
 
     if (options.stdout) {
       spinner.stop('Report ready')
-      process.stdout.write(markdown)
+      const encoder = new TextEncoder()
+      Deno.stdout.writeSync(encoder.encode(markdown))
       return '(stdout)'
     }
 
@@ -167,8 +169,9 @@ async function dryRunReport(
     ].join('\n')
 
     spinner.stop('Dry run complete')
-    if (process.stdout.isTTY) {
-      process.stdout.write(preview + '\n')
+    if (Deno.stdout.isTerminal()) {
+      const encoder = new TextEncoder()
+      Deno.stdout.writeSync(encoder.encode(preview + '\n'))
     }
     return '(dry-run)'
   } catch (err) {

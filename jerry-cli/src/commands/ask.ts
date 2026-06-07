@@ -53,7 +53,8 @@ export async function runAsk(question: string): Promise<void> {
     )
     flush()
     spinner.stop()
-    process.stdout.write(`${answer}\n`)
+    const encoder = new TextEncoder()
+    Deno.stdout.writeSync(encoder.encode(`${answer}\n`))
   } catch (err) {
     spinner.stop()
     throw err

@@ -4,9 +4,11 @@
 
 Headless, **stateless** work reports from [ActivityWatch](https://activitywatch.net/) and OpenAI. Independent of the Jerry desktop (Electron) app — same repo, no shared runtime dependency.
 
+**⚠️ Migrated to Deno:** This CLI now runs on [Deno](https://deno.com/) instead of Node.js (Phase 1 of a3t integration).
+
 ## Requirements
 
-- Node.js 20+
+- **Deno 2.0+** (replaces Node.js 20+)
 - ActivityWatch running locally (default `http://localhost:5600`)
 - `OPENAI_API_KEY` in the environment
 
@@ -14,32 +16,38 @@ Headless, **stateless** work reports from [ActivityWatch](https://activitywatch.
 
 ```bash
 cd jerry-cli
-npm install
-npm run build
+
+# Install Deno if you don't have it
+curl -fsSL https://deno.land/install.sh | sh
+
+# Set your OpenAI API key
 export OPENAI_API_KEY=sk-...   # required for reports
 ```
 
-From the `jerry-cli/` directory, use **`./jerry`** (the wrapper script in this folder). That is the normal way to run the CLI during development — you do **not** need a global `jerry` on your PATH.
+From the `jerry-cli/` directory, use **`deno task jerry`** to run commands:
 
 ```bash
-./jerry report "give me report of my past hour work"     # recommended
-npm run jerry -- report "give me report of my past hour work"
-npm run report -- "give me report of my past hour work"
-node dist/cli.js report "give me report of my past hour work"
+deno task jerry report "give me report of my past hour work"
+deno task jerry ask "what is the difference between async and await?"
+deno task jerry config
 ```
 
-**Optional — global `jerry` command:** run `npm link` once from `jerry-cli/`, then you can use `jerry` from any directory:
+You can also run directly with `deno run`:
 
 ```bash
-npm link
-jerry report "give me report of my past hour work"
+deno run --allow-net --allow-read --allow-write --allow-env src/cli.ts report "yesterday"
 ```
 
-Throughout this README, `./jerry` means “from inside `jerry-cli/`”. After `npm link`, substitute `jerry` instead.
+**Optional — make `jerry` executable:**
+
+```bash
+chmod +x src/cli.ts
+./src/cli.ts report "yesterday"
+```
 
 ## Configure
 
-Run **`./jerry config`** for an interactive menu (↑↓ to navigate, Enter to select):
+Run **`deno task jerry config`** for an interactive menu (↑↓ to navigate, Enter to select):
 
 - Set OpenAI API key
 - Set reports directory
@@ -52,10 +60,10 @@ Settings are stored in `~/.config/jerry/cli.json` (mode `0600`). Environment var
 Non-interactive (for scripts):
 
 ```bash
-./jerry config show
-./jerry config set openai-api-key sk-...
-./jerry config set reports-dir ~/Documents/jerry-reports
-./jerry config remove openai-api-key
+deno task jerry config show
+deno task jerry config set openai-api-key sk-...
+deno task jerry config set reports-dir ~/Documents/jerry-reports
+deno task jerry config remove openai-api-key
 ```
 
 | Setting | Config key | Env override |
@@ -67,21 +75,21 @@ Non-interactive (for scripts):
 
 ## Commands
 
-Run from `jerry-cli/` with `./jerry` (or `jerry` if you ran `npm link`):
+Run from `jerry-cli/` with `deno task jerry`:
 
 ```bash
-./jerry ask "what is the difference between async and await?"
-./jerry report "yesterday's work"
-./jerry report "May 10 to May 13 this year"
-./jerry report "June 1st"
-./jerry report "give me report of my past hour work"
-./jerry report --hours 2 "what did I work on"
-./jerry report --dry-run "today"          # AW context only, no LLM
-./jerry report --stdout "last hour"       # print markdown, no file
-./jerry config                            # interactive settings menu
-./jerry config set openai-api-key
-./jerry config set reports-dir ~/Documents/jerry-reports
-./jerry config remove openai-api-key
+deno task jerry ask "what is the difference between async and await?"
+deno task jerry report "yesterday's work"
+deno task jerry report "May 10 to May 13 this year"
+deno task jerry report "June 1st"
+deno task jerry report "give me report of my past hour work"
+deno task jerry report --hours 2 "what did I work on"
+deno task jerry report --dry-run "today"          # AW context only, no LLM
+deno task jerry report --stdout "last hour"       # print markdown, no file
+deno task jerry config                            # interactive settings menu
+deno task jerry config set openai-api-key
+deno task jerry config set reports-dir ~/Documents/jerry-reports
+deno task jerry config remove openai-api-key
 ```
 
 While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the current step.
@@ -92,18 +100,41 @@ While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the curren
 
 Each `ask` and `report` run is isolated: **no chat history**.
 
-## Release tarball
+## Development
 
 ```bash
-npm run pack:release
-```
+# Check types
+deno task check
 
-Produces `jerry-cli-0.1.0.tgz` for GitHub Releases. See [ISSUES.md](ISSUES.md) for v0.1 tracking ([#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12)).
+# Format code
+deno task fmt
+
+# Lint
+deno task lint
+
+# Build/cache dependencies
+deno task build
+```
 
 ## Branching
 
 - Desktop: `main`, `feat/*`
 - CLI experiment: `jerry-cli/main`, `jerry-cli/feat-*` → merge to `main` when ready
+- a3t integration: `jerry-cli/a3t-integration`, `jerry-cli/deno-migration`
+
+## Migration notes (Node.js → Deno)
+
+This CLI was migrated from Node.js to Deno as Phase 1 of a3t integration:
+
+- ✅ Replaced `package.json` with `deno.json` task runner
+- ✅ Converted to `node:fs`, `node:path`, `node:os` imports for Node built-ins
+- ✅ Replaced `commander` → `@cliffy/command`
+- ✅ Replaced `@inquirer/prompts` → `@cliffy/prompt`
+- ✅ Replaced `dotenv` → `@std/dotenv`
+- ✅ OpenAI SDK via `npm:openai` specifier (Deno-compatible)
+- ✅ All `process.*` → `Deno.*` equivalents
+
+See issue [#16](https://github.com/SarkarShubhdeep/jerry-client/issues/16) and branch `jerry-cli/deno-migration`.
 
 ## Desktop app
 

@@ -1,4 +1,4 @@
-import { confirm, input, password, select, Separator } from '@inquirer/prompts'
+import { Confirm, Input, Secret, Select } from '@cliffy/prompt'
 import {
   configFilePath,
   loadConfig,
@@ -16,7 +16,7 @@ import { clearTerminal, pauseEnter } from '../terminal.js'
 function printConfigSummary(): void {
   const cfg = loadConfig()
   const awUrl =
-    process.env.ACTIVITYWATCH_BASE_URL ?? 'http://localhost:5600/api/0'
+    Deno.env.get('ACTIVITYWATCH_BASE_URL') ?? 'http://localhost:5600/api/0'
 
   console.log('  Jerry CLI configuration')
   console.log(`  File: ${configFilePath()}`)
@@ -53,7 +53,7 @@ type MenuAction =
   | 'exit'
 
 export async function runConfigMenu(): Promise<void> {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+  if (!Deno.stdin.isTerminal() || !Deno.stdout.isTerminal()) {
     showConfig()
     return
   }
@@ -65,53 +65,55 @@ export async function runConfigMenu(): Promise<void> {
     const file = readConfigFile()
     const cfg = loadConfig()
 
-    const action = await select<MenuAction>({
+    const choices = [
+      {
+        name: 'Set OpenAI API key',
+        value: 'set-openai-api-key',
+      },
+      {
+        name: 'Set reports directory',
+        value: 'set-reports-dir',
+      },
+      {
+        name: 'Set OpenAI model',
+        value: 'set-openai-model',
+      },
+      {
+        name: '─────────────────────',
+        value: '__separator_1',
+      },
+      {
+        name: file.openaiApiKey ? 'Remove OpenAI API key from file' : 'Remove OpenAI API key from file (disabled)',
+        value: file.openaiApiKey ? 'remove-openai-api-key' : '__disabled_1',
+      },
+      {
+        name: file.reportsDir ? 'Remove reports directory from file' : 'Remove reports directory from file (disabled)',
+        value: file.reportsDir ? 'remove-reports-dir' : '__disabled_2',
+      },
+      {
+        name: file.openaiModel ? 'Remove OpenAI model from file' : 'Remove OpenAI model from file (disabled)',
+        value: file.openaiModel ? 'remove-openai-model' : '__disabled_3',
+      },
+      {
+        name: '─────────────────────',
+        value: '__separator_2',
+      },
+      {
+        name: 'View CLI commands',
+        value: 'view',
+      },
+      {
+        name: 'Done',
+        value: 'exit',
+      },
+    ].filter(choice => !choice.value.startsWith('__disabled'))
+
+    const action = await Select.prompt<MenuAction>({
       message: 'Choose an option (↑↓ navigate, Enter select)',
-      loop: false,
-      choices: [
-        {
-          name: 'Set OpenAI API key',
-          value: 'set-openai-api-key',
-          description: cfg.openaiApiKey
-            ? `Current: ${maskSecret(cfg.openaiApiKey)}`
-            : 'Not configured',
-        },
-        {
-          name: 'Set reports directory',
-          value: 'set-reports-dir',
-          description: cfg.reportsDir,
-        },
-        {
-          name: 'Set OpenAI model',
-          value: 'set-openai-model',
-          description: cfg.openaiModel,
-        },
-        new Separator(),
-        {
-          name: 'Remove OpenAI API key from file',
-          value: 'remove-openai-api-key',
-          disabled: !file.openaiApiKey,
-        },
-        {
-          name: 'Remove reports directory from file',
-          value: 'remove-reports-dir',
-          disabled: !file.reportsDir,
-        },
-        {
-          name: 'Remove OpenAI model from file',
-          value: 'remove-openai-model',
-          disabled: !file.openaiModel,
-        },
-        new Separator(),
-        {
-          name: 'View CLI commands',
-          value: 'view',
-        },
-        {
-          name: 'Done',
-          value: 'exit',
-        },
-      ],
+      options: choices.filter(c => !c.value.startsWith('__separator')).map(c => ({
+        name: c.name,
+        value: c.value as MenuAction,
+      })),
     })
 
     if (action === 'exit') {
@@ -146,30 +148,29 @@ export async function runConfigMenu(): Promise<void> {
 async function handleMenuAction(action: MenuAction): Promise<string | null> {
   switch (action) {
     case 'set-openai-api-key': {
-      const key = await password({
+      const key = await Secret.prompt({
         message: 'OpenAI API key',
-        mask: '*',
-        validate: (v) => (v.trim() ? true : 'API key cannot be empty'),
+        validate: (v: string) => v.trim() ? true : 'API key cannot be empty',
       })
       setConfigValue('openai-api-key', key.trim())
       return `${settingLabel('openai-api-key')} saved (${maskSecret(key.trim())})`
     }
     case 'set-reports-dir': {
       const cfg = loadConfig()
-      const dir = await input({
+      const dir = await Input.prompt({
         message: 'Reports directory path',
         default: cfg.reportsDir,
-        validate: (v) => (v.trim() ? true : 'Path cannot be empty'),
+        validate: (v: string) => v.trim() ? true : 'Path cannot be empty',
       })
       setConfigValue('reports-dir', dir.trim())
       return `${settingLabel('reports-dir')} saved → ${loadConfig().reportsDir}`
     }
     case 'set-openai-model': {
       const cfg = loadConfig()
-      const model = await input({
+      const model = await Input.prompt({
         message: 'OpenAI model ID',
         default: cfg.openaiModel,
-        validate: (v) => (v.trim() ? true : 'Model cannot be empty'),
+        validate: (v: string) => v.trim() ? true : 'Model cannot be empty',
       })
       setConfigValue('openai-model', model.trim())
       return `${settingLabel('openai-model')} saved → ${loadConfig().openaiModel}`
@@ -178,7 +179,7 @@ async function handleMenuAction(action: MenuAction): Promise<string | null> {
     case 'remove-reports-dir':
     case 'remove-openai-model': {
       const setting = action.replace('remove-', '') as ConfigSetting
-      const ok = await confirm({
+      const ok = await Confirm.prompt({
         message: `Remove ${settingLabel(setting)} from config file?`,
         default: false,
       })
@@ -208,16 +209,16 @@ export async function setConfig(settingRaw: string, value?: string): Promise<voi
   let resolved = value?.trim() ?? ''
   if (!resolved) {
     if (setting === 'openai-api-key') {
-      resolved = process.stdin.isTTY
-        ? await password({ message: 'OpenAI API key', mask: '*' })
+      resolved = Deno.stdin.isTerminal()
+        ? await Secret.prompt({ message: 'OpenAI API key' })
         : await promptSecret('OpenAI API key: ')
     } else if (setting === 'reports-dir') {
-      resolved = process.stdin.isTTY
-        ? await input({ message: 'Reports directory path' })
+      resolved = Deno.stdin.isTerminal()
+        ? await Input.prompt({ message: 'Reports directory path' })
         : await promptLine('Reports directory path: ')
     } else {
-      resolved = process.stdin.isTTY
-        ? await input({ message: 'OpenAI model ID' })
+      resolved = Deno.stdin.isTerminal()
+        ? await Input.prompt({ message: 'OpenAI model ID' })
         : await promptLine('OpenAI model ID: ')
     }
   }

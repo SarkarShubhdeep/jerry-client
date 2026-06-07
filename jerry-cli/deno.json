@@ -1,0 +1,44 @@
+{
+  "version": "0.1.0",
+  "tasks": {
+    "jerry": "deno run --allow-read --allow-write --allow-net --allow-env src/cli.ts",
+    "report": "deno run --allow-read --allow-write --allow-net --allow-env src/cli.ts report",
+    "build": "deno cache --check src/cli.ts",
+    "lint": "deno lint src",
+    "fmt": "deno fmt src",
+    "check": "deno check src/**/*.ts"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "deno.ns"],
+    "allowJs": false
+  },
+  "imports": {
+    "@cliffy/prompt": "jsr:@cliffy/prompt@^1.0.0-rc.7",
+    "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
+    "openai": "npm:openai@^6.41.0"
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage"
+  ],
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": false,
+    "singleQuote": true,
+    "proseWrap": "preserve",
+    "include": ["src/"],
+    "exclude": ["dist/", "node_modules/"]
+  },
+  "lint": {
+    "include": ["src/"],
+    "exclude": ["dist/", "node_modules/"],
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}
