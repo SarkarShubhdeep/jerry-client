@@ -30,6 +30,8 @@ jobs:
           key: ${{ runner.os }}-deno-${{ hashFiles('jerry-cli/deno.lock') }}
           restore-keys: |
             ${{ runner.os }}-deno-
+      - name: Install dependencies
+        run: deno install
       - name: Build
         run: deno task build
       - name: Lint
