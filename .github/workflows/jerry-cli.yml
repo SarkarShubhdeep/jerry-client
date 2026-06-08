@@ -36,6 +36,8 @@ jobs:
         run: deno task build
       - name: Lint
         run: deno task lint
+      - name: Test
+        run: deno task test
       - name: Check formatting
         run: deno task fmt --check
       - name: Test CLI help
