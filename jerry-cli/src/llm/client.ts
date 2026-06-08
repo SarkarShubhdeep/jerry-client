@@ -66,7 +66,7 @@ async function writeNarrative(
       content: userPrompt.trim(),
     },
   ]
-  return chatCompletion(client, modelId, messages)
+  return await chatCompletion(client, modelId, messages)
 }
 
 async function recheckNarrative(
@@ -92,7 +92,7 @@ async function recheckNarrative(
       ].join(''),
     },
   ]
-  return chatCompletion(client, modelId, messages)
+  return await chatCompletion(client, modelId, messages)
 }
 
 function emitStatus(

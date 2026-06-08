@@ -63,7 +63,7 @@ export async function runConfigMenu(): Promise<void> {
     printConfigSummary()
 
     const file = readConfigFile()
-    const cfg = loadConfig()
+    const _cfg = loadConfig()
 
     const choices = [
       {

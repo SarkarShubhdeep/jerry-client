@@ -39,7 +39,7 @@ export function watcherFromBucketId(bucketId: string): WatcherKind {
 
 async function awFetch(path: string, timeoutMs = 8_000): Promise<Response> {
   const url = `${baseUrl()}${path}`
-  return fetch(url, {
+  return await fetch(url, {
     cache: 'no-store',
     signal: AbortSignal.timeout(timeoutMs),
   })
