@@ -3,12 +3,7 @@ import { load as loadDotenv } from '@std/dotenv'
 import { Command } from '@cliffy/command'
 import { runAsk } from './commands/ask.ts'
 import { runReport } from './commands/report.ts'
-import {
-  removeConfig,
-  runConfigMenu,
-  setConfig,
-  showConfig,
-} from './commands/config-cmd.ts'
+import { removeConfig, runConfigMenu, setConfig, showConfig } from './commands/config-cmd.ts'
 
 // Load .env file if it exists in the jerry-cli directory
 const jerryCliDir = new URL('.', import.meta.url).pathname.replace('/src/', '/')
@@ -58,43 +53,45 @@ await new Command()
       Deno.exit(1)
     }
   })
-  .command('config', new Command()
-    .description('Manage configuration settings')
-    .command('show', 'Print configuration (non-interactive)')
-    .action(() => {
-      showConfig()
-    })
-    .command('set', 'Save a setting (prompts if value omitted)')
-    .arguments('<setting:string> [value:string]')
-    .action(async (_opts, setting: string, value?: string) => {
-      try {
-        await setConfig(setting, value)
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.error(`jerry: ${message}`)
-        Deno.exit(1)
-      }
-    })
-    .command('remove', 'Remove a setting from the config file')
-    .arguments('<setting:string>')
-    .action((_opts, setting: string) => {
-      try {
-        removeConfig(setting)
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.error(`jerry: ${message}`)
-        Deno.exit(1)
-      }
-    })
-    .command('menu', 'Interactive settings menu')
-    .action(async () => {
-      try {
-        await runConfigMenu()
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.error(`jerry: ${message}`)
-        Deno.exit(1)
-      }
-    })
+  .command(
+    'config',
+    new Command()
+      .description('Manage configuration settings')
+      .command('show', 'Print configuration (non-interactive)')
+      .action(() => {
+        showConfig()
+      })
+      .command('set', 'Save a setting (prompts if value omitted)')
+      .arguments('<setting:string> [value:string]')
+      .action(async (_opts, setting: string, value?: string) => {
+        try {
+          await setConfig(setting, value)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err)
+          console.error(`jerry: ${message}`)
+          Deno.exit(1)
+        }
+      })
+      .command('remove', 'Remove a setting from the config file')
+      .arguments('<setting:string>')
+      .action((_opts, setting: string) => {
+        try {
+          removeConfig(setting)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err)
+          console.error(`jerry: ${message}`)
+          Deno.exit(1)
+        }
+      })
+      .command('menu', 'Interactive settings menu')
+      .action(async () => {
+        try {
+          await runConfigMenu()
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err)
+          console.error(`jerry: ${message}`)
+          Deno.exit(1)
+        }
+      }),
   )
   .parse(Deno.args)

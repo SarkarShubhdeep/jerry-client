@@ -1,8 +1,5 @@
 import type { Bucket } from '../aw/types.ts'
-import {
-  NO_TIME_RANGE_ERROR,
-  parseCalendarRangeFromPrompt,
-} from './activity-dates.ts'
+import { NO_TIME_RANGE_ERROR, parseCalendarRangeFromPrompt } from './activity-dates.ts'
 
 const MAX_EXPLICIT_HOURS = 24 * 90
 
@@ -85,7 +82,7 @@ export function mentionsFullHistory(lower: string): boolean {
   if (/\ball\s+(my\s+)?(activity|data)\b/.test(lower)) return true
   if (
     /\beverything\s+(on|from|in)\s+(my\s+)?(machine|computer|activitywatch)\b/.test(
-      lower
+      lower,
     )
   ) {
     return true
@@ -176,7 +173,7 @@ export function resolveActivityRange(
   prompt: string,
   hoursFlag?: number,
   buckets?: Bucket[],
-  options?: { strict?: boolean }
+  options?: { strict?: boolean },
 ): ActivityTimeRange {
   const strict = options?.strict !== false
   if (hoursFlag !== undefined && Number.isFinite(hoursFlag) && hoursFlag > 0) {

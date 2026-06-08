@@ -1,6 +1,7 @@
 import { Confirm, Input, Secret, Select } from '@cliffy/prompt'
 import {
   configFilePath,
+  type ConfigSetting,
   loadConfig,
   maskSecret,
   parseConfigSetting,
@@ -8,15 +9,13 @@ import {
   removeConfigValue,
   setConfigValue,
   settingLabel,
-  type ConfigSetting,
 } from '../config.ts'
 import { promptLine, promptSecret } from '../prompt.ts'
 import { clearTerminal, pauseEnter } from '../terminal.ts'
 
 function printConfigSummary(): void {
   const cfg = loadConfig()
-  const awUrl =
-    Deno.env.get('ACTIVITYWATCH_BASE_URL') ?? 'http://localhost:5600/api/0'
+  const awUrl = Deno.env.get('ACTIVITYWATCH_BASE_URL') ?? 'http://localhost:5600/api/0'
 
   console.log('  Jerry CLI configuration')
   console.log(`  File: ${configFilePath()}`)
@@ -83,15 +82,21 @@ export async function runConfigMenu(): Promise<void> {
         value: '__separator_1',
       },
       {
-        name: file.openaiApiKey ? 'Remove OpenAI API key from file' : 'Remove OpenAI API key from file (disabled)',
+        name: file.openaiApiKey
+          ? 'Remove OpenAI API key from file'
+          : 'Remove OpenAI API key from file (disabled)',
         value: file.openaiApiKey ? 'remove-openai-api-key' : '__disabled_1',
       },
       {
-        name: file.reportsDir ? 'Remove reports directory from file' : 'Remove reports directory from file (disabled)',
+        name: file.reportsDir
+          ? 'Remove reports directory from file'
+          : 'Remove reports directory from file (disabled)',
         value: file.reportsDir ? 'remove-reports-dir' : '__disabled_2',
       },
       {
-        name: file.openaiModel ? 'Remove OpenAI model from file' : 'Remove OpenAI model from file (disabled)',
+        name: file.openaiModel
+          ? 'Remove OpenAI model from file'
+          : 'Remove OpenAI model from file (disabled)',
         value: file.openaiModel ? 'remove-openai-model' : '__disabled_3',
       },
       {
@@ -106,11 +111,11 @@ export async function runConfigMenu(): Promise<void> {
         name: 'Done',
         value: 'exit',
       },
-    ].filter(choice => !choice.value.startsWith('__disabled'))
+    ].filter((choice) => !choice.value.startsWith('__disabled'))
 
     const action = await Select.prompt({
       message: 'Choose an option (↑↓ navigate, Enter select)',
-      options: choices.filter(c => !c.value.startsWith('__separator')).map(c => ({
+      options: choices.filter((c) => !c.value.startsWith('__separator')).map((c) => ({
         name: c.name,
         value: c.value as MenuAction,
       })),

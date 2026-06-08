@@ -22,7 +22,7 @@ export type ConfigSetting = 'openai-api-key' | 'reports-dir' | 'openai-model'
 
 const CONFIG_DIR = path.join(
   Deno.env.get('XDG_CONFIG_HOME') ?? path.join(os.homedir(), '.config'),
-  'jerry'
+  'jerry',
 )
 const CONFIG_FILE = path.join(CONFIG_DIR, 'cli.json')
 
@@ -191,7 +191,7 @@ export function parseConfigSetting(raw: string): ConfigSetting {
     return 'openai-model'
   }
   throw new Error(
-    `Unknown setting "${raw}". Use: openai-api-key, reports-dir, openai-model`
+    `Unknown setting "${raw}". Use: openai-api-key, reports-dir, openai-model`,
   )
 }
 

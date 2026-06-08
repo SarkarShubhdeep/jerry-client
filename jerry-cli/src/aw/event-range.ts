@@ -4,7 +4,7 @@ import type { RawEvent } from './types.ts'
 export function filterEventsInRange(
   events: readonly RawEvent[],
   startIso: string,
-  endIso: string
+  endIso: string,
 ): RawEvent[] {
   const startMs = new Date(startIso).getTime()
   const endMs = new Date(endIso).getTime()

@@ -49,7 +49,7 @@ export async function runAsk(question: string): Promise<void> {
         apiKey: config.openaiApiKey,
         model: config.openaiModel,
       },
-      onStatus
+      onStatus,
     )
     flush()
     spinner.stop()

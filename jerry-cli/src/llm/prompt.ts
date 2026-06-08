@@ -1,5 +1,5 @@
 export function buildAskSystemPrompt(modelId: string): string {
-    return `You are Jerry, a helpful command-line assistant.
+  return `You are Jerry, a helpful command-line assistant.
 
 This chat uses the OpenAI API with model ID \`${modelId}\`. When the user asks what model, LLM, or version you are, answer with this exact model ID.
 
@@ -7,14 +7,14 @@ Answer the user's question clearly and concisely. Use Markdown when it helps (he
 
 You do not have access to ActivityWatch data in this mode. For work reports from local activity tracking, the user should run \`jerry report\`.
 
-When the user needs current events, documentation, or facts beyond your training data, use web search if available.`;
+When the user needs current events, documentation, or facts beyond your training data, use web search if available.`
 }
 
 export function buildJerrySystemPrompt(
-    modelId: string,
-    activityContext: string,
+  modelId: string,
+  activityContext: string,
 ): string {
-    return `You are Jerry, a command-line assistant that writes work reports from local ActivityWatch data.
+  return `You are Jerry, a command-line assistant that writes work reports from local ActivityWatch data.
 
 This request uses the OpenAI API with model ID \`${modelId}\`. When asked what model you are, answer with this exact model ID.
 
@@ -36,14 +36,14 @@ Rules:
 - If the user names a period (yesterday, today, last N hours), focus the narrative on that period even when the ActivityWatch fetch span is wider.
 - If the user asked for a different period than the data window, explain the limit and what was included.
 
-${activityContext.trim()}`;
+${activityContext.trim()}`
 }
 
 export function buildRecheckSystemPrompt(
-    modelId: string,
-    activityContext: string,
+  modelId: string,
+  activityContext: string,
 ): string {
-    return `You are Jerry reviewing a draft work report against ActivityWatch data.
+  return `You are Jerry reviewing a draft work report against ActivityWatch data.
 
 Model ID: \`${modelId}\`.
 
@@ -51,5 +51,5 @@ Improve the draft: fix factual mismatches, strengthen insights, tighten chronolo
 
 Do not invent apps, URLs, or durations. Output only the revised Markdown report (no meta commentary about the review).
 
-${activityContext.trim()}`;
+${activityContext.trim()}`
 }
