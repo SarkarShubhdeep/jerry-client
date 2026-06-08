@@ -16,6 +16,9 @@ export type CliJsonFile = {
   openaiApiKey?: string
   openaiModel?: string
   reportsDir?: string
+  a3t?: {
+    overridePath?: string
+  }
 }
 
 export type ConfigSetting = 'openai-api-key' | 'reports-dir' | 'openai-model'
@@ -46,6 +49,23 @@ function collapseHome(p: string): string {
 
 export function configFilePath(): string {
   return CONFIG_FILE
+}
+
+/** Default local override directory for a3t-managed assets. */
+export function defaultA3tAssetsDir(): string {
+  return path.join(CONFIG_DIR, 'assets')
+}
+
+/** Custom override path from cli.json, or undefined when using the default directory. */
+export function getA3tOverridePath(): string | undefined {
+  const custom = readConfigFile().a3t?.overridePath?.trim()
+  if (!custom) return undefined
+  return expandHome(custom)
+}
+
+/** Effective override directory: config value or ~/.config/jerry/assets/. */
+export function resolveA3tOverrideDir(): string {
+  return getA3tOverridePath() ?? defaultA3tAssetsDir()
 }
 
 export function readConfigFile(): CliJsonFile {

@@ -6,7 +6,8 @@
     "build": "deno cache --check src/cli.ts",
     "lint": "deno lint src",
     "fmt": "deno fmt src",
-    "check": "deno check src/**/*.ts"
+    "check": "deno check src/**/*.ts",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-sys src/"
   },
   "compilerOptions": {
     "strict": true,
@@ -16,7 +17,8 @@
     "@cliffy/prompt": "jsr:@cliffy/prompt@^1.0.0-rc.7",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
-    "openai": "npm:openai@^6.41.0"
+    "openai": "npm:openai@^6.41.0",
+    "a3t": "https://raw.githubusercontent.com/mieweb/a3t/115171ecb6d1dca856295b8e8f2a4346126ef07f/deno.ts"
   },
   "exclude": [
     "node_modules",
