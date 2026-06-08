@@ -1,19 +1,12 @@
 import OpenAI from 'openai'
 import type { EasyInputMessage } from 'openai/resources/responses/responses'
-import {
-  checkActivityWatchConnection,
-  fetchActivitySummary,
-} from '../aw/client.js'
-import { formatActivityContext } from './activity-context.js'
-import { type ActivityTimeRange } from './activity-intent.js'
-import {
-  buildAskSystemPrompt,
-  buildJerrySystemPrompt,
-  buildRecheckSystemPrompt,
-} from './prompt.js'
-import type { LlmStatusCallback, LlmStatusUpdate } from './status.js'
-import type { ChatMessage, ChatResponse } from './types.js'
-import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './models.js'
+import { checkActivityWatchConnection, fetchActivitySummary } from '../aw/client.ts'
+import { formatActivityContext } from './activity-context.ts'
+import { type ActivityTimeRange } from './activity-intent.ts'
+import { buildAskSystemPrompt, buildJerrySystemPrompt, buildRecheckSystemPrompt } from './prompt.ts'
+import type { LlmStatusCallback, LlmStatusUpdate } from './status.ts'
+import type { ChatMessage, ChatResponse } from './types.ts'
+import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './models.ts'
 
 export type JerryCliLlmConfig = {
   apiKey: string
@@ -22,8 +15,7 @@ export type JerryCliLlmConfig = {
 
 export type ReportProgress = (label: string) => void
 
-const API_KEY_ERROR =
-  'OpenAI API key is not configured. Run: jerry config set openai-api-key'
+const API_KEY_ERROR = 'OpenAI API key is not configured. Run: jerry config set openai-api-key'
 
 function resolveModel(model: string): string {
   return isAllowedOpenAiModel(model) ? model : DEFAULT_OPENAI_MODEL
@@ -33,7 +25,7 @@ async function chatCompletion(
   client: OpenAI,
   modelId: string,
   messages: ChatMessage[],
-  jsonMode?: boolean
+  jsonMode?: boolean,
 ): Promise<string> {
   const completion = await client.chat.completions.create({
     model: modelId,
@@ -53,7 +45,7 @@ async function writeNarrative(
   modelId: string,
   activityContext: string,
   userPrompt: string,
-  onProgress?: ReportProgress
+  onProgress?: ReportProgress,
 ): Promise<string> {
   onProgress?.('Writing work narrative…')
   const messages: ChatMessage[] = [
@@ -66,7 +58,7 @@ async function writeNarrative(
       content: userPrompt.trim(),
     },
   ]
-  return chatCompletion(client, modelId, messages)
+  return await chatCompletion(client, modelId, messages)
 }
 
 async function recheckNarrative(
@@ -75,7 +67,7 @@ async function recheckNarrative(
   activityContext: string,
   userPrompt: string,
   draft: string,
-  onProgress?: ReportProgress
+  onProgress?: ReportProgress,
 ): Promise<string> {
   onProgress?.('Rechecking the work narrative…')
   const messages: ChatMessage[] = [
@@ -92,12 +84,12 @@ async function recheckNarrative(
       ].join(''),
     },
   ]
-  return chatCompletion(client, modelId, messages)
+  return await chatCompletion(client, modelId, messages)
 }
 
 function emitStatus(
   onStatus: LlmStatusCallback | undefined,
-  update: LlmStatusUpdate
+  update: LlmStatusUpdate,
 ): void {
   onStatus?.(update)
 }
@@ -127,7 +119,7 @@ async function askViaResponses(
   client: OpenAI,
   modelId: string,
   question: string,
-  onStatus?: LlmStatusCallback
+  onStatus?: LlmStatusCallback,
 ): Promise<string> {
   const input: EasyInputMessage[] = [
     { role: 'developer', content: buildAskSystemPrompt(modelId) },
@@ -166,9 +158,7 @@ async function askViaResponses(
         break
 
       case 'response.web_search_call.completed': {
-        const durationMs = webSearchStartedAt
-          ? Date.now() - webSearchStartedAt
-          : undefined
+        const durationMs = webSearchStartedAt ? Date.now() - webSearchStartedAt : undefined
         emitStatus(onStatus, {
           phase: 'web_search_done',
           label: formatWebSearchDone(durationMs),
@@ -217,7 +207,7 @@ async function askViaCompletions(
   client: OpenAI,
   modelId: string,
   question: string,
-  onStatus?: LlmStatusCallback
+  onStatus?: LlmStatusCallback,
 ): Promise<string> {
   emitStatus(onStatus, { phase: 'thinking', label: 'Thinking…' })
 
@@ -257,7 +247,7 @@ async function askViaCompletions(
 export async function askQuestion(
   question: string,
   config: JerryCliLlmConfig,
-  onStatus?: LlmStatusCallback
+  onStatus?: LlmStatusCallback,
 ): Promise<string> {
   const apiKey = config.apiKey.trim()
   if (!apiKey) {
@@ -284,7 +274,7 @@ export async function generateReport(
   prompt: string,
   activityRange: ActivityTimeRange,
   config: JerryCliLlmConfig,
-  onProgress?: ReportProgress
+  onProgress?: ReportProgress,
 ): Promise<ChatResponse> {
   const apiKey = config.apiKey.trim()
   if (!apiKey) {
@@ -296,7 +286,7 @@ export async function generateReport(
   if (!connection.connected) {
     throw new Error(
       connection.error ??
-        'ActivityWatch is not reachable. Start ActivityWatch and try again.'
+        'ActivityWatch is not reachable. Start ActivityWatch and try again.',
     )
   }
 
@@ -319,7 +309,7 @@ export async function generateReport(
     modelId,
     activityContext,
     prompt,
-    onProgress
+    onProgress,
   )
 
   content = await recheckNarrative(
@@ -328,7 +318,7 @@ export async function generateReport(
     activityContext,
     prompt,
     content,
-    onProgress
+    onProgress,
   )
 
   return {

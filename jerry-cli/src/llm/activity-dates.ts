@@ -91,7 +91,7 @@ type ParsedCalendarRange = {
 
 function buildCalendarRange(
   start: DateParts,
-  end: DateParts
+  end: DateParts,
 ): ParsedCalendarRange {
   const rangeStart = startOfCalendarDay(start)
   const rangeEnd = endExclusiveAfterDay(end)
@@ -99,8 +99,7 @@ function buildCalendarRange(
     throw new Error('Invalid date range: end must be on or after start.')
   }
 
-  const sameDay =
-    start.year === end.year && start.month === end.month && start.day === end.day
+  const sameDay = start.year === end.year && start.month === end.month && start.day === end.day
 
   const label = sameDay
     ? `${formatShortDate(start)} (full calendar day, local time)`
@@ -113,7 +112,7 @@ function partsFromMonthDay(
   monthToken: string,
   day: number,
   text: string,
-  yearOverride?: number
+  yearOverride?: number,
 ): DateParts | undefined {
   const month = parseMonthName(monthToken)
   if (month === undefined || day < 1 || day > 31) {
@@ -130,7 +129,7 @@ function partsFromMonthDay(
 /** ISO YYYY-MM-DD and optional range. */
 function parseIsoRange(text: string): ParsedCalendarRange | null {
   const range = text.match(
-    /\b(20\d{2})-(\d{2})-(\d{2})\b\s*(?:to|through|until|-)\s*\b(20\d{2})-(\d{2})-(\d{2})\b/i
+    /\b(20\d{2})-(\d{2})-(\d{2})\b\s*(?:to|through|until|-)\s*\b(20\d{2})-(\d{2})-(\d{2})\b/i,
   )
   if (range) {
     const start: DateParts = {
@@ -163,7 +162,7 @@ function parseIsoRange(text: string): ParsedCalendarRange | null {
 function parseNamedMonthRange(text: string): ParsedCalendarRange | null {
   const range = new RegExp(
     `\\b(${MONTH_PATTERN})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:to|through|until|-)\\s*(?:(${MONTH_PATTERN})\\s+)?(\\d{1,2})(?:st|nd|rd|th)?`,
-    'i'
+    'i',
   ).exec(text)
 
   if (range) {
@@ -189,7 +188,7 @@ function parseNamedSingleDay(text: string): ParsedCalendarRange | null {
 
   const monthFirst = new RegExp(
     `\\b(${MONTH_PATTERN})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*,?\\s*(20\\d{2}))?`,
-    'i'
+    'i',
   ).exec(text)
 
   if (monthFirst) {
@@ -202,7 +201,7 @@ function parseNamedSingleDay(text: string): ParsedCalendarRange | null {
 
   const dayFirst = new RegExp(
     `\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(${MONTH_PATTERN})(?:\\s*,?\\s*(20\\d{2}))?`,
-    'i'
+    'i',
   ).exec(text)
 
   if (dayFirst) {
@@ -222,7 +221,7 @@ function parseNamedSingleDay(text: string): ParsedCalendarRange | null {
 export function parseCalendarRangeFromPrompt(text: string): ParsedCalendarRange | null {
   return (
     parseIsoRange(text) ??
-    parseNamedMonthRange(text) ??
-    parseNamedSingleDay(text)
+      parseNamedMonthRange(text) ??
+      parseNamedSingleDay(text)
   )
 }

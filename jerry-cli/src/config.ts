@@ -1,7 +1,7 @@
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
-import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './llm/models.js'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './llm/models.ts'
 
 export type JerryCliConfig = {
   openaiApiKey: string
@@ -21,8 +21,8 @@ export type CliJsonFile = {
 export type ConfigSetting = 'openai-api-key' | 'reports-dir' | 'openai-model'
 
 const CONFIG_DIR = path.join(
-  process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), '.config'),
-  'jerry'
+  Deno.env.get('XDG_CONFIG_HOME') ?? path.join(os.homedir(), '.config'),
+  'jerry',
 )
 const CONFIG_FILE = path.join(CONFIG_DIR, 'cli.json')
 
@@ -74,7 +74,7 @@ export function maskSecret(value: string): string {
 export function loadConfig(): JerryCliConfig {
   const file = readConfigFile()
 
-  const envKey = process.env.OPENAI_API_KEY?.trim() ?? ''
+  const envKey = Deno.env.get('OPENAI_API_KEY')?.trim() ?? ''
   const fileKey = file.openaiApiKey?.trim() ?? ''
   let openaiApiKey = ''
   let openaiApiKeySource: JerryCliConfig['openaiApiKeySource'] = 'none'
@@ -86,7 +86,7 @@ export function loadConfig(): JerryCliConfig {
     openaiApiKeySource = 'file'
   }
 
-  const envModel = process.env.OPENAI_MODEL?.trim()
+  const envModel = Deno.env.get('OPENAI_MODEL')?.trim()
   const fileModel = file.openaiModel?.trim()
   let openaiModel = DEFAULT_OPENAI_MODEL
   let openaiModelSource: JerryCliConfig['openaiModelSource'] = 'default'
@@ -98,7 +98,7 @@ export function loadConfig(): JerryCliConfig {
     openaiModelSource = 'file'
   }
 
-  const reportsFromEnv = process.env.JERRY_REPORTS_DIR?.trim()
+  const reportsFromEnv = Deno.env.get('JERRY_REPORTS_DIR')?.trim()
   const reportsFromFile = file.reportsDir?.trim()
   let reportsDir = DEFAULT_REPORTS_DIR
   let reportsDirSource: JerryCliConfig['reportsDirSource'] = 'default'
@@ -191,7 +191,7 @@ export function parseConfigSetting(raw: string): ConfigSetting {
     return 'openai-model'
   }
   throw new Error(
-    `Unknown setting "${raw}". Use: openai-api-key, reports-dir, openai-model`
+    `Unknown setting "${raw}". Use: openai-api-key, reports-dir, openai-model`,
   )
 }
 

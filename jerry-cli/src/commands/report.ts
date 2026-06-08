@@ -1,20 +1,20 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import {
   checkActivityWatchConnection,
   fetchActivitySummary,
   listActivityWatchBuckets,
-} from '../aw/client.js'
-import { formatActivityContext } from '../llm/activity-context.js'
-import { generateReport } from '../llm/client.js'
+} from '../aw/client.ts'
+import { formatActivityContext } from '../llm/activity-context.ts'
+import { generateReport } from '../llm/client.ts'
 import {
+  type ActivityTimeRange,
   formatActivityWindowLog,
   resolveActivityRange,
   resolveRangeHours,
-  type ActivityTimeRange,
-} from '../llm/activity-intent.js'
-import { ensureReportsDir, loadConfig, type JerryCliConfig } from '../config.js'
-import { Spinner } from '../spinner.js'
+} from '../llm/activity-intent.ts'
+import { ensureReportsDir, type JerryCliConfig, loadConfig } from '../config.ts'
+import { Spinner } from '../spinner.ts'
 
 export type ReportOptions = {
   prompt: string
@@ -32,7 +32,7 @@ function buildReportMarkdown(
   body: string,
   rangeHours: number,
   rangeLabel: string,
-  model: string
+  model: string,
 ): string {
   const generatedAt = new Date().toISOString()
   return `---
@@ -65,8 +65,9 @@ export async function runReport(options: ReportOptions): Promise<string> {
     const buckets = await listActivityWatchBuckets()
     const activityRange = resolveActivityRange(prompt, options.hours, buckets)
     const rangeHours = resolveRangeHours(prompt, options.hours, buckets)
-    process.stderr.write(
-      `jerry: ActivityWatch window: ${formatActivityWindowLog(activityRange)}\n`
+    const encoder = new TextEncoder()
+    Deno.stderr.writeSync(
+      encoder.encode(`jerry: ActivityWatch window: ${formatActivityWindowLog(activityRange)}\n`),
     )
 
     if (options.dryRun) {
@@ -92,7 +93,7 @@ export async function runReport(options: ReportOptions): Promise<string> {
         apiKey: config.openaiApiKey,
         model: config.openaiModel,
       },
-      onProgress
+      onProgress,
     )
 
     if (lastLabel) {
@@ -105,12 +106,13 @@ export async function runReport(options: ReportOptions): Promise<string> {
       response.message.content,
       rangeHours,
       activityRange.label,
-      response.model
+      response.model,
     )
 
     if (options.stdout) {
       spinner.stop('Report ready')
-      process.stdout.write(markdown)
+      const encoder = new TextEncoder()
+      Deno.stdout.writeSync(encoder.encode(markdown))
       return '(stdout)'
     }
 
@@ -118,7 +120,7 @@ export async function runReport(options: ReportOptions): Promise<string> {
     ensureReportsDir(config.reportsDir)
     const filePath = path.join(
       config.reportsDir,
-      `report-${timestampForFilename()}.md`
+      `report-${timestampForFilename()}.md`,
     )
     fs.writeFileSync(filePath, markdown, 'utf8')
     spinner.stop('Report saved')
@@ -133,7 +135,7 @@ async function dryRunReport(
   prompt: string,
   activityRange: ActivityTimeRange,
   config: JerryCliConfig,
-  spinner: Spinner
+  spinner: Spinner,
 ): Promise<string> {
   spinner.start('Dry run — fetching ActivityWatch…')
 
@@ -167,8 +169,9 @@ async function dryRunReport(
     ].join('\n')
 
     spinner.stop('Dry run complete')
-    if (process.stdout.isTTY) {
-      process.stdout.write(preview + '\n')
+    if (Deno.stdout.isTerminal()) {
+      const encoder = new TextEncoder()
+      Deno.stdout.writeSync(encoder.encode(preview + '\n'))
     }
     return '(dry-run)'
   } catch (err) {

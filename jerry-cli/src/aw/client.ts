@@ -1,21 +1,21 @@
-import os from 'os'
+import os from 'node:os'
 import {
   aggregateMeetingSessions,
   aggregateTopActivities,
   aggregateTopWebLinks,
   mergeTopActivities,
-} from './aggregate.js'
-import { filterEventsInRange } from './event-range.js'
+} from './aggregate.ts'
+import { filterEventsInRange } from './event-range.ts'
 import type {
   AwActivityResult,
   Bucket,
   LatestWatcherEvent,
+  MeetingSession,
   RawEvent,
   TopActivity,
-  MeetingSession,
-  WebLinkActivity,
   WatcherKind,
-} from './types.js'
+  WebLinkActivity,
+} from './types.ts'
 
 const DEFAULT_BASE_URL = 'http://localhost:5600/api/0'
 const WATCHERS: WatcherKind[] = ['window', 'web', 'vscode', 'afk']
@@ -24,7 +24,7 @@ export const EVENT_PAGE_SIZE = 1000
 const MAX_PAGES_PER_BUCKET = 50
 
 function baseUrl(): string {
-  const url = process.env.ACTIVITYWATCH_BASE_URL || DEFAULT_BASE_URL
+  const url = Deno.env.get('ACTIVITYWATCH_BASE_URL') || DEFAULT_BASE_URL
   return url.replace(/\/+$/, '')
 }
 
@@ -39,7 +39,7 @@ export function watcherFromBucketId(bucketId: string): WatcherKind {
 
 async function awFetch(path: string, timeoutMs = 8_000): Promise<Response> {
   const url = `${baseUrl()}${path}`
-  return fetch(url, {
+  return await fetch(url, {
     cache: 'no-store',
     signal: AbortSignal.timeout(timeoutMs),
   })
@@ -99,7 +99,7 @@ async function fetchEventsPage(
   bucketId: string,
   start: string,
   end: string,
-  limit: number = EVENT_PAGE_SIZE
+  limit: number = EVENT_PAGE_SIZE,
 ): Promise<RawEvent[]> {
   const params = new URLSearchParams({
     start,
@@ -108,7 +108,7 @@ async function fetchEventsPage(
   })
   const res = await awFetch(
     `/buckets/${encodeURIComponent(bucketId)}/events?${params}`,
-    30_000
+    30_000,
   )
   if (!res.ok) {
     throw new Error(`ActivityWatch events request failed (${res.status})`)
@@ -118,9 +118,7 @@ async function fetchEventsPage(
 
 function oldestTimestamp(events: readonly RawEvent[]): string {
   return events.reduce((oldest, e) => {
-    return new Date(e.timestamp).getTime() < new Date(oldest).getTime()
-      ? e.timestamp
-      : oldest
+    return new Date(e.timestamp).getTime() < new Date(oldest).getTime() ? e.timestamp : oldest
   }, events[0].timestamp)
 }
 
@@ -136,7 +134,7 @@ export type PaginatedFetchResult = {
 export async function fetchAllEventsInRange(
   bucketId: string,
   start: string,
-  end: string
+  end: string,
 ): Promise<PaginatedFetchResult> {
   const all: RawEvent[] = []
   let rangeEnd = end
@@ -151,7 +149,7 @@ export async function fetchAllEventsInRange(
     let page = batch
     if (all.length > 0) {
       const oldestMs = Math.min(
-        ...all.map((e) => new Date(e.timestamp).getTime())
+        ...all.map((e) => new Date(e.timestamp).getTime()),
       )
       page = batch.filter((e) => new Date(e.timestamp).getTime() < oldestMs)
     }
@@ -177,7 +175,7 @@ function pickBucket(buckets: Bucket[], watcher: WatcherKind): Bucket | undefined
 
   const hostname = os.hostname()
   const hostMatch = matches.find(
-    (b) => b.id.includes(hostname) || b.hostname === hostname
+    (b) => b.id.includes(hostname) || b.hostname === hostname,
   )
   return hostMatch ?? matches[0]
 }
@@ -185,16 +183,13 @@ function pickBucket(buckets: Bucket[], watcher: WatcherKind): Bucket | undefined
 function labelFromEvent(e: RawEvent, watcher: WatcherKind): { app: string; title: string } {
   const data = e.data ?? {}
   if (watcher === 'afk') {
-    const status =
-      typeof data.status === 'string' ? data.status : 'unknown'
+    const status = typeof data.status === 'string' ? data.status : 'unknown'
     return { app: 'afk', title: status }
   }
-  const app =
-    (typeof data.app === 'string' && data.app) ||
+  const app = (typeof data.app === 'string' && data.app) ||
     (typeof data.title === 'string' && data.title) ||
     'Unknown'
-  const title =
-    (typeof data.title === 'string' && data.title) ||
+  const title = (typeof data.title === 'string' && data.title) ||
     (typeof data.url === 'string' && data.url) ||
     ''
   return { app, title }
@@ -214,7 +209,7 @@ export type ActivityFetchRange = {
 }
 
 export async function fetchActivitySummary(
-  range: ActivityFetchRange
+  range: ActivityFetchRange,
 ): Promise<AwActivityResult> {
   const start = range.start
   const end = range.end
@@ -245,7 +240,7 @@ export async function fetchActivitySummary(
         const { events: rawEvents, pages } = await fetchAllEventsInRange(
           bucket.id,
           startIso,
-          endIso
+          endIso,
         )
         const events = filterEventsInRange(rawEvents, startIso, endIso)
         totalApiCalls += pages
@@ -273,18 +268,18 @@ export async function fetchActivitySummary(
         if (watcher === 'afk') {
           afk = { status: title, timestamp: newest.timestamp }
         }
-      })
+      }),
     )
 
     const topActivities = mergeTopActivities(perWatcherTop)
 
     latest.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     )
 
     const totalEventCount = Object.values(eventCounts).reduce(
       (sum, n) => sum + (n ?? 0),
-      0
+      0,
     )
 
     return {

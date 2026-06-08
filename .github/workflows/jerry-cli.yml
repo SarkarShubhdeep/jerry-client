@@ -20,13 +20,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: jerry-cli/package-lock.json
-      - run: npm ci
-      - run: npm run build
-      - run: npm run lint
-      - run: node dist/cli.js --help
-      - run: node dist/cli.js config show
+          deno-version: v2.x
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('jerry-cli/deno.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+      - name: Install dependencies
+        run: deno install
+      - name: Build
+        run: deno task build
+      - name: Lint
+        run: deno task lint
+      - name: Check formatting
+        run: deno task fmt --check
+      - name: Test CLI help
+        run: deno task jerry --help
+      - name: Test config show
+        run: deno task jerry config show

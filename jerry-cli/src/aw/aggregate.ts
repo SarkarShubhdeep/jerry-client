@@ -5,7 +5,7 @@ import type {
   TopActivity,
   WatcherKind,
   WebLinkActivity,
-} from './types.js'
+} from './types.ts'
 
 const TOP_ACTIVITIES_LIMIT = 20
 const TOP_WEB_LINKS_LIMIT = 25
@@ -37,7 +37,7 @@ function hostMatchesWorkSuffix(hostname: string): boolean {
     return true
   }
   return WORK_HOST_SUFFIXES.some(
-    (suffix) => host === suffix || host.endsWith(`.${suffix}`)
+    (suffix) => host === suffix || host.endsWith(`.${suffix}`),
   )
 }
 
@@ -47,12 +47,10 @@ function labelFromEvent(e: RawEvent, watcher: WatcherKind): { app: string; title
     const status = typeof data.status === 'string' ? data.status : 'unknown'
     return { app: 'afk', title: status }
   }
-  const app =
-    (typeof data.app === 'string' && data.app) ||
+  const app = (typeof data.app === 'string' && data.app) ||
     (typeof data.title === 'string' && data.title) ||
     'Unknown'
-  const title =
-    (typeof data.title === 'string' && data.title) ||
+  const title = (typeof data.title === 'string' && data.title) ||
     (typeof data.url === 'string' && data.url) ||
     ''
   return { app, title }
@@ -65,7 +63,7 @@ function activityKey(watcher: WatcherKind, app: string, title: string): string {
 export function aggregateTopActivities(
   events: readonly RawEvent[],
   watcher: WatcherKind,
-  limit: number = TOP_ACTIVITIES_LIMIT
+  limit: number = TOP_ACTIVITIES_LIMIT,
 ): TopActivity[] {
   const totals = new Map<string, TopActivity>()
 
@@ -95,7 +93,7 @@ export function aggregateTopActivities(
 
 export function mergeTopActivities(
   perWatcher: TopActivity[],
-  limit: number = TOP_ACTIVITIES_LIMIT
+  limit: number = TOP_ACTIVITIES_LIMIT,
 ): TopActivity[] {
   return [...perWatcher]
     .sort((a, b) => b.durationSeconds - a.durationSeconds)
@@ -137,7 +135,7 @@ export function isWorkRelatedUrl(url: string): boolean {
 
 export function aggregateTopWebLinks(
   events: readonly RawEvent[],
-  limit: number = TOP_WEB_LINKS_LIMIT
+  limit: number = TOP_WEB_LINKS_LIMIT,
 ): WebLinkActivity[] {
   const totals = new Map<string, WebLinkActivity>()
 
@@ -191,7 +189,7 @@ function meetingPlatformFromUrl(url: string): MeetingPlatform | null {
   try {
     const host = new URL(url).hostname.toLowerCase()
     const rule = MEETING_HOSTS.find(
-      (r) => host === r.host || host.endsWith(`.${r.host}`)
+      (r) => host === r.host || host.endsWith(`.${r.host}`),
     )
     return rule?.platform ?? null
   } catch {
@@ -246,7 +244,7 @@ type MeetingEventSlice = {
 
 export function aggregateMeetingSessions(
   events: readonly RawEvent[],
-  limit: number = MEETING_SESSION_LIMIT
+  limit: number = MEETING_SESSION_LIMIT,
 ): MeetingSession[] {
   const slices: MeetingEventSlice[] = []
 
@@ -298,11 +296,10 @@ export function aggregateMeetingSessions(
       const endMs = Math.max(...group.map((g) => g.endMs))
       const url = group[0].url
       const platform = group[0].platform
-      const title =
-        group
-          .map((g) => g.title)
-          .filter((t) => t && !t.startsWith('http'))
-          .sort((a, b) => b.length - a.length)[0] ?? group[0].title
+      const title = group
+        .map((g) => g.title)
+        .filter((t) => t && !t.startsWith('http'))
+        .sort((a, b) => b.length - a.length)[0] ?? group[0].title
 
       sessions.push({
         platform,

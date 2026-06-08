@@ -1,5 +1,5 @@
-import { formatLocalTimeRange } from '../aw/time-format.js'
-import type { AwActivitySummary, MeetingSession, WatcherKind } from '../aw/types.js'
+import { formatLocalTimeRange } from '../aw/time-format.ts'
+import type { AwActivitySummary, MeetingSession, WatcherKind } from '../aw/types.ts'
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) {
@@ -15,7 +15,7 @@ function formatDuration(seconds: number): string {
 }
 
 function formatWatcherCounts(
-  counts: Partial<Record<WatcherKind, number>>
+  counts: Partial<Record<WatcherKind, number>>,
 ): string {
   const parts = Object.entries(counts)
     .filter(([, n]) => (n ?? 0) > 0)
@@ -25,14 +25,13 @@ function formatWatcherCounts(
 
 function formatMeetingLine(session: MeetingSession): string {
   const when = formatLocalTimeRange(session.start, session.end)
-  const titlePart =
-    session.title && !session.title.startsWith('http')
-      ? ` — title: "${session.title.replace(/"/g, "'")}"`
-      : ''
-  const codePart = session.meetingCode
-    ? ` — code: ${session.meetingCode}`
+  const titlePart = session.title && !session.title.startsWith('http')
+    ? ` — title: "${session.title.replace(/"/g, "'")}"`
     : ''
-  return `- [${session.platform}] ${when}${titlePart}${codePart} (${formatDuration(session.durationSeconds)}, ${session.url})`
+  const codePart = session.meetingCode ? ` — code: ${session.meetingCode}` : ''
+  return `- [${session.platform}] ${when}${titlePart}${codePart} (${
+    formatDuration(session.durationSeconds)
+  }, ${session.url})`
 }
 
 export function formatActivityContext(summary: AwActivitySummary): string {
@@ -54,7 +53,7 @@ export function formatActivityContext(summary: AwActivitySummary): string {
     lines.push(
       '',
       '### Video meetings (web watcher)',
-      'Each line has local start–end time, tab title when known, and meet code when parseable. Use these exact times when asking the user about a meeting.'
+      'Each line has local start–end time, tab title when known, and meet code when parseable. Use these exact times when asking the user about a meeting.',
     )
     for (const session of summary.meetingSessions) {
       lines.push(formatMeetingLine(session))
@@ -68,7 +67,9 @@ export function formatActivityContext(summary: AwActivitySummary): string {
     for (const row of summary.topActivities) {
       const titlePart = row.title ? ` — ${row.title}` : ''
       lines.push(
-        `- [${row.watcher}] ${row.app}${titlePart}: ${formatDuration(row.durationSeconds)} (${row.eventCount} events)`
+        `- [${row.watcher}] ${row.app}${titlePart}: ${
+          formatDuration(row.durationSeconds)
+        } (${row.eventCount} events)`,
       )
     }
   }
@@ -77,12 +78,14 @@ export function formatActivityContext(summary: AwActivitySummary): string {
     lines.push(
       '',
       '### Work-related web links (ActivityWatch web watcher)',
-      'Include these URLs in your reply when summarizing work (use Markdown links).'
+      'Include these URLs in your reply when summarizing work (use Markdown links).',
     )
     for (const link of summary.topWebLinks) {
       const label = link.title.replace(/[[\]]/g, '').trim() || link.url
       lines.push(
-        `- [${label.slice(0, 120)}](${link.url}) — ${formatDuration(link.durationSeconds)} (${link.eventCount} visits)`
+        `- [${label.slice(0, 120)}](${link.url}) — ${
+          formatDuration(link.durationSeconds)
+        } (${link.eventCount} visits)`,
       )
     }
   }
@@ -92,14 +95,14 @@ export function formatActivityContext(summary: AwActivitySummary): string {
     for (const row of summary.latest) {
       const titlePart = row.title ? ` — ${row.title}` : ''
       lines.push(
-        `- [${row.watcher}] ${row.app}${titlePart} at ${row.timestamp}`
+        `- [${row.watcher}] ${row.app}${titlePart} at ${row.timestamp}`,
       )
     }
   }
 
   lines.push(
     '',
-    'Use only the data above. When work-related web links are present, reference them inline in chronological context and repeat them in a final **Links** section (most time spent first). If the user asks about a period outside this range, say so.'
+    'Use only the data above. When work-related web links are present, reference them inline in chronological context and repeat them in a final **Links** section (most time spent first). If the user asks about a period outside this range, say so.',
   )
 
   return lines.join('\n')
