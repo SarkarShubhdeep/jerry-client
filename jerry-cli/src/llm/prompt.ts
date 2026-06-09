@@ -1,22 +1,23 @@
-export function buildAskSystemPrompt(modelId: string): string {
-  return `You are Jerry, a helpful command-line assistant.
+import { getPrompt } from '../assets/index.ts'
 
-This chat uses the OpenAI API with model ID \`${modelId}\`. When the user asks what model, LLM, or version you are, answer with this exact model ID.
+const ASK_KEY = 'prompts/ask.txt'
+const REPORT_KEY = 'prompts/report.txt'
+const RECHECK_KEY = 'prompts/recheck.txt'
+
+const ASK_DEFAULT = `You are Jerry, a helpful command-line assistant.
+
+This chat uses the OpenAI API with model ID \`{{modelId}}\`. When the user asks what model, LLM, or version you are, answer with this exact model ID.
 
 Answer the user's question clearly and concisely. Use Markdown when it helps (headings, lists, \`inline code\`, fenced code blocks, links).
 
 You do not have access to ActivityWatch data in this mode. For work reports from local activity tracking, the user should run \`jerry report\`.
 
 When the user needs current events, documentation, or facts beyond your training data, use web search if available.`
-}
 
-export function buildJerrySystemPrompt(
-  modelId: string,
-  activityContext: string,
-): string {
-  return `You are Jerry, a command-line assistant that writes work reports from local ActivityWatch data.
+const REPORT_DEFAULT =
+  `You are Jerry, a command-line assistant that writes work reports from local ActivityWatch data.
 
-This request uses the OpenAI API with model ID \`${modelId}\`. When asked what model you are, answer with this exact model ID.
+This request uses the OpenAI API with model ID \`{{modelId}}\`. When asked what model you are, answer with this exact model ID.
 
 Format the report in Markdown (headings, lists, bold, links). Start with a clear title heading.
 
@@ -36,20 +37,49 @@ Rules:
 - If the user names a period (yesterday, today, last N hours), focus the narrative on that period even when the ActivityWatch fetch span is wider.
 - If the user asked for a different period than the data window, explain the limit and what was included.
 
-${activityContext.trim()}`
-}
+{{activityContext}}`
 
-export function buildRecheckSystemPrompt(
-  modelId: string,
-  activityContext: string,
-): string {
-  return `You are Jerry reviewing a draft work report against ActivityWatch data.
+const RECHECK_DEFAULT = `You are Jerry reviewing a draft work report against ActivityWatch data.
 
-Model ID: \`${modelId}\`.
+Model ID: \`{{modelId}}\`.
 
 Improve the draft: fix factual mismatches, strengthen insights, tighten chronological flow, place work-related links inline where they belong in the timeline, and ensure a final **Links** section lists all work URLs together (most time spent first).
 
 Do not invent apps, URLs, or durations. Output only the revised Markdown report (no meta commentary about the review).
 
-${activityContext.trim()}`
+{{activityContext}}`
+
+function injectPromptVars(
+  template: string,
+  vars: { modelId?: string; activityContext?: string },
+): string {
+  let result = template
+  if (vars.modelId !== undefined) {
+    result = result.replace(/\{\{modelId\}\}/g, vars.modelId)
+  }
+  if (vars.activityContext !== undefined) {
+    result = result.replace(/\{\{activityContext\}\}/g, vars.activityContext.trim())
+  }
+  return result
+}
+
+export async function getAskPrompt(modelId: string): Promise<string> {
+  const template = await getPrompt(ASK_KEY, ASK_DEFAULT)
+  return injectPromptVars(template, { modelId })
+}
+
+export async function getReportPrompt(
+  modelId: string,
+  activityContext: string,
+): Promise<string> {
+  const template = await getPrompt(REPORT_KEY, REPORT_DEFAULT)
+  return injectPromptVars(template, { modelId, activityContext })
+}
+
+export async function getRecheckPrompt(
+  modelId: string,
+  activityContext: string,
+): Promise<string> {
+  const template = await getPrompt(RECHECK_KEY, RECHECK_DEFAULT)
+  return injectPromptVars(template, { modelId, activityContext })
 }
