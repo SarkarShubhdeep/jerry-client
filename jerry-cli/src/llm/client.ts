@@ -3,7 +3,7 @@ import type { EasyInputMessage } from 'openai/resources/responses/responses'
 import { checkActivityWatchConnection, fetchActivitySummary } from '../aw/client.ts'
 import { formatActivityContext } from './activity-context.ts'
 import { type ActivityTimeRange } from './activity-intent.ts'
-import { buildAskSystemPrompt, buildJerrySystemPrompt, buildRecheckSystemPrompt } from './prompt.ts'
+import { getAskPrompt, getRecheckPrompt, getReportPrompt } from './prompt.ts'
 import type { LlmStatusCallback, LlmStatusUpdate } from './status.ts'
 import type { ChatMessage, ChatResponse } from './types.ts'
 import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from './models.ts'
@@ -51,7 +51,7 @@ async function writeNarrative(
   const messages: ChatMessage[] = [
     {
       role: 'system',
-      content: buildJerrySystemPrompt(modelId, activityContext),
+      content: await getReportPrompt(modelId, activityContext),
     },
     {
       role: 'user',
@@ -73,7 +73,7 @@ async function recheckNarrative(
   const messages: ChatMessage[] = [
     {
       role: 'system',
-      content: buildRecheckSystemPrompt(modelId, activityContext),
+      content: await getRecheckPrompt(modelId, activityContext),
     },
     {
       role: 'user',
@@ -122,7 +122,7 @@ async function askViaResponses(
   onStatus?: LlmStatusCallback,
 ): Promise<string> {
   const input: EasyInputMessage[] = [
-    { role: 'developer', content: buildAskSystemPrompt(modelId) },
+    { role: 'developer', content: await getAskPrompt(modelId) },
     { role: 'user', content: question.trim() },
   ]
 
@@ -217,7 +217,7 @@ async function askViaCompletions(
   const stream = await client.chat.completions.create({
     model: modelId,
     messages: [
-      { role: 'system', content: buildAskSystemPrompt(modelId) },
+      { role: 'system', content: await getAskPrompt(modelId) },
       { role: 'user', content: question.trim() },
     ],
     stream: true,
