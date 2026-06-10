@@ -30,7 +30,10 @@ await new Command()
       Deno.exit(1)
     }
   })
-  .command('report', 'Generate a work report from ActivityWatch (stateless, saves .md)')
+  .command(
+    'report',
+    'Generate a work report from ActivityWatch. Examples: jerry report today (midnight→now), jerry report yesterday (prior day), jerry report "May 13 to May 20" (custom range). Saves .md unless --stdout.',
+  )
   .arguments('[prompt...]')
   .option('--hours <n:number>', 'ActivityWatch range in hours (overrides prompt parsing)')
   .option('--dry-run', 'Fetch and print AW context only; no LLM call')

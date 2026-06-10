@@ -79,12 +79,16 @@ Run from `jerry-cli/` with `deno task jerry`:
 
 ```bash
 deno task jerry ask "what is the difference between async and await?"
+deno task jerry report today                      # current day (midnight → now)
+deno task jerry report yesterday                  # prior full calendar day
+deno task jerry report "May 13 to May 20"         # custom date range
 deno task jerry report "yesterday's work"
 deno task jerry report "May 10 to May 13 this year"
 deno task jerry report "June 1st"
 deno task jerry report "give me report of my past hour work"
 deno task jerry report --hours 2 "what did I work on"
-deno task jerry report --dry-run "today"          # AW context only, no LLM
+deno task jerry report today --dry-run            # AW context only, no LLM
+deno task jerry report today --stdout             # print markdown, no file
 deno task jerry report --stdout "last hour"       # print markdown, no file
 deno task jerry config                            # interactive settings menu
 deno task jerry config set openai-api-key
@@ -96,7 +100,7 @@ While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the curren
 
 `ask` uses the same API key and model as `report` but does not read ActivityWatch. When the model uses web search, stderr shows `Searching web…` then `✓ Searched web`.
 
-`report` only loads ActivityWatch for a **time range in your prompt** (e.g. `June 1`, `May 10 to May 13`, `yesterday`, `last 2 hours`, or `--hours`). A prompt with no range fails with examples.
+`report` only loads ActivityWatch for a **time range in your prompt** (e.g. `today`, `yesterday`, `June 1`, `May 10 to May 13`, `last 2 hours`, or `--hours`). A prompt with no range fails with examples.
 
 Each `ask` and `report` run is isolated: **no chat history**.
 

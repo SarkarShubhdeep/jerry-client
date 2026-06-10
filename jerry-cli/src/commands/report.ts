@@ -50,7 +50,9 @@ ${body}
 export async function runReport(options: ReportOptions): Promise<string> {
   const prompt = options.prompt?.trim()
   if (!prompt) {
-    throw new Error('Provide a report prompt, e.g. jerry report "summarize my past hour"')
+    throw new Error(
+      'Provide a report prompt. Examples: jerry report today, jerry report yesterday, jerry report "May 13 to May 20"',
+    )
   }
 
   const config = loadConfig()
