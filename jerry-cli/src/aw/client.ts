@@ -1,21 +1,6 @@
 import os from 'node:os'
-import {
-  aggregateMeetingSessions,
-  aggregateTopActivities,
-  aggregateTopWebLinks,
-  mergeTopActivities,
-} from './aggregate.ts'
-import { filterEventsInRange } from './event-range.ts'
-import type {
-  AwActivityResult,
-  Bucket,
-  LatestWatcherEvent,
-  MeetingSession,
-  RawEvent,
-  TopActivity,
-  WatcherKind,
-  WebLinkActivity,
-} from './types.ts'
+import { type ActivityTimeRange, buildActivitySummary, pickBucket } from '@jerry/lib'
+import type { AwActivityResult, Bucket, RawEvent, WatcherKind } from './types.ts'
 
 const DEFAULT_BASE_URL = 'http://localhost:5600/api/0'
 const WATCHERS: WatcherKind[] = ['window', 'web', 'vscode', 'afk']
@@ -26,15 +11,6 @@ const MAX_PAGES_PER_BUCKET = 50
 function baseUrl(): string {
   const url = Deno.env.get('ACTIVITYWATCH_BASE_URL') || DEFAULT_BASE_URL
   return url.replace(/\/+$/, '')
-}
-
-export function watcherFromBucketId(bucketId: string): WatcherKind {
-  const id = bucketId.toLowerCase()
-  if (id.includes('aw-watcher-window')) return 'window'
-  if (id.includes('aw-watcher-web')) return 'web'
-  if (id.includes('aw-watcher-vscode')) return 'vscode'
-  if (id.includes('aw-watcher-afk')) return 'afk'
-  return 'other'
 }
 
 async function awFetch(path: string, timeoutMs = 8_000): Promise<Response> {
@@ -169,53 +145,13 @@ export async function fetchAllEventsInRange(
   return { events: all, pages }
 }
 
-function pickBucket(buckets: Bucket[], watcher: WatcherKind): Bucket | undefined {
-  const matches = buckets.filter((b) => watcherFromBucketId(b.id) === watcher)
-  if (matches.length === 0) return undefined
-
-  const hostname = os.hostname()
-  const hostMatch = matches.find(
-    (b) => b.id.includes(hostname) || b.hostname === hostname,
-  )
-  return hostMatch ?? matches[0]
-}
-
-function labelFromEvent(e: RawEvent, watcher: WatcherKind): { app: string; title: string } {
-  const data = e.data ?? {}
-  if (watcher === 'afk') {
-    const status = typeof data.status === 'string' ? data.status : 'unknown'
-    return { app: 'afk', title: status }
-  }
-  const app = (typeof data.app === 'string' && data.app) ||
-    (typeof data.title === 'string' && data.title) ||
-    'Unknown'
-  const title = (typeof data.title === 'string' && data.title) ||
-    (typeof data.url === 'string' && data.url) ||
-    ''
-  return { app, title }
-}
-
-function newestEvent(events: RawEvent[]): RawEvent | undefined {
-  if (events.length === 0) return undefined
-  return events.reduce((newest, e) =>
-    new Date(e.timestamp).getTime() > new Date(newest.timestamp).getTime() ? e : newest
-  )
-}
-
-export type ActivityFetchRange = {
-  start: Date
-  end: Date
-  label: string
-}
+export type ActivityFetchRange = ActivityTimeRange
 
 export async function fetchActivitySummary(
   range: ActivityFetchRange,
 ): Promise<AwActivityResult> {
-  const start = range.start
-  const end = range.end
-  const hours = Math.max((end.getTime() - start.getTime()) / (60 * 60 * 1000), 0.25)
-  const startIso = start.toISOString()
-  const endIso = end.toISOString()
+  const startIso = range.start.toISOString()
+  const endIso = range.end.toISOString()
 
   try {
     const buckets = await listActivityWatchBuckets()
@@ -223,81 +159,32 @@ export async function fetchActivitySummary(
       return { connected: false, error: 'No ActivityWatch buckets found. Is a watcher running?' }
     }
 
-    const latest: LatestWatcherEvent[] = []
-    const perWatcherTop: TopActivity[] = []
-    let topWebLinks: WebLinkActivity[] = []
-    let meetingSessions: MeetingSession[] = []
-    const eventCounts: Partial<Record<WatcherKind, number>> = {}
-    const eventFetchPages: Partial<Record<WatcherKind, number>> = {}
-    let afk: { status: string; timestamp: string } | null = null
-    let totalApiCalls = 0
+    const hostname = os.hostname()
+    const eventsByBucket: Record<string, RawEvent[]> = {}
+    const pagesByBucket: Record<string, number> = {}
 
     await Promise.all(
       WATCHERS.map(async (watcher) => {
-        const bucket = pickBucket(buckets, watcher)
+        const bucket = pickBucket(buckets, watcher, hostname)
         if (!bucket) return
 
-        const { events: rawEvents, pages } = await fetchAllEventsInRange(
+        const { events, pages } = await fetchAllEventsInRange(
           bucket.id,
           startIso,
           endIso,
         )
-        const events = filterEventsInRange(rawEvents, startIso, endIso)
-        totalApiCalls += pages
-        eventCounts[watcher] = events.length
-        eventFetchPages[watcher] = pages
-
-        perWatcherTop.push(...aggregateTopActivities(events, watcher))
-        if (watcher === 'web') {
-          topWebLinks = aggregateTopWebLinks(events)
-          meetingSessions = aggregateMeetingSessions(events)
-        }
-
-        const newest = newestEvent(events)
-        if (!newest) return
-
-        const { app, title } = labelFromEvent(newest, watcher)
-        latest.push({
-          watcher,
-          bucketId: bucket.id,
-          app,
-          title,
-          timestamp: newest.timestamp,
-        })
-
-        if (watcher === 'afk') {
-          afk = { status: title, timestamp: newest.timestamp }
-        }
+        eventsByBucket[bucket.id] = events
+        pagesByBucket[bucket.id] = pages
       }),
     )
 
-    const topActivities = mergeTopActivities(perWatcherTop)
-
-    latest.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    return buildActivitySummary(
+      buckets,
+      eventsByBucket,
+      pagesByBucket,
+      range,
+      { hostname },
     )
-
-    const totalEventCount = Object.values(eventCounts).reduce(
-      (sum, n) => sum + (n ?? 0),
-      0,
-    )
-
-    return {
-      connected: true,
-      bucketCount: buckets.length,
-      rangeHours: hours,
-      rangeLabel: range.label,
-      range: { start: startIso, end: endIso },
-      afk,
-      latest,
-      topActivities,
-      topWebLinks,
-      meetingSessions,
-      eventCounts,
-      eventFetchPages,
-      totalEventCount,
-      totalApiCalls,
-    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     if (message.includes('fetch failed') || message.includes('ECONNREFUSED')) {

@@ -15,6 +15,20 @@ export { ask } from './src/llm/ask.ts'
 export { generateReport, recheckReport } from './src/llm/report.ts'
 
 // --- ActivityWatch ---
+export {
+  aggregateMeetingSessions,
+  aggregateTopActivities,
+  aggregateTopWebLinks,
+  isWorkRelatedUrl,
+  mergeTopActivities,
+} from './src/aw/aggregate.ts'
+export {
+  buildActivitySummary,
+  pickBucket,
+  watcherFromBucketId,
+  type BuildActivitySummaryOptions,
+} from './src/aw/build-summary.ts'
+export { filterEventsInRange } from './src/aw/event-range.ts'
 export { formatActivityContext } from './src/aw/format.ts'
 export {
   type ActivityTimeRange,
@@ -53,4 +67,16 @@ export type {
 
 export type { ChatMessage, ChatResponse, ChatRole, LlmApiPath } from './src/llm/types.ts'
 export type { LlmStatusCallback, LlmStatusPhase, LlmStatusUpdate } from './src/llm/status.ts'
-export type { AwActivitySummary, Bucket, WatcherKind } from './src/aw/types.ts'
+export type {
+  AwActivityError,
+  AwActivityResult,
+  AwActivitySummary,
+  Bucket,
+  LatestWatcherEvent,
+  MeetingPlatform,
+  MeetingSession,
+  RawEvent,
+  TopActivity,
+  WatcherKind,
+  WebLinkActivity,
+} from './src/aw/types.ts'
