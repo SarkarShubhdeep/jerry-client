@@ -1,9 +1,5 @@
 import os from 'node:os'
-import {
-  buildActivitySummary,
-  pickBucket,
-  type ActivityTimeRange,
-} from '@jerry/lib'
+import { type ActivityTimeRange, buildActivitySummary, pickBucket } from '@jerry/lib'
 import type { AwActivityResult, Bucket, RawEvent, WatcherKind } from './types.ts'
 
 const DEFAULT_BASE_URL = 'http://localhost:5600/api/0'
