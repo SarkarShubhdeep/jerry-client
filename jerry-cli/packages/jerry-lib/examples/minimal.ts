@@ -4,6 +4,8 @@
  */
 import {
   ask,
+  buildActivitySummary,
+  formatActivityContext,
   generateReport,
   type GenerateReportInput,
   initJerryLib,
@@ -40,6 +42,23 @@ const input: GenerateReportInput = {
   config,
 }
 
+const mockBuckets = [{ id: 'aw-watcher-window_hostname' }]
+const mockEvents = {
+  'aw-watcher-window_hostname': [{
+    timestamp: '2026-06-10T10:00:00.000Z',
+    duration: 120,
+    data: { app: 'Cursor', title: 'minimal.ts' },
+  }],
+}
+const mockRange = {
+  start: new Date('2026-06-10T09:00:00.000Z'),
+  end: new Date('2026-06-10T12:00:00.000Z'),
+  label: 'Smoke test range',
+}
+
+const summary = buildActivitySummary(mockBuckets, mockEvents, { 'aw-watcher-window_hostname': 1 }, mockRange)
+const formattedContext = formatActivityContext(summary)
+
 // Type-only references — no network calls
 export type Smoke =
   | typeof ask
@@ -47,3 +66,4 @@ export type Smoke =
   | typeof mapStatus
   | typeof mapReport
   | typeof input
+  | typeof formattedContext

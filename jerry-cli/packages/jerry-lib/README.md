@@ -57,7 +57,13 @@ initJerryLib()
 The host supplies `JerryLlmConfig` (API key and model). The library never reads environment variables.
 
 ```ts
-import { ask, generateReport, type JerryLlmConfig } from '@jerry/lib'
+import {
+  ask,
+  buildActivitySummary,
+  formatActivityContext,
+  generateReport,
+  type JerryLlmConfig,
+} from '@jerry/lib'
 
 const config: JerryLlmConfig = {
   apiKey: process.env.OPENAI_API_KEY ?? '',
@@ -70,11 +76,20 @@ const answer = await ask('What is Deno?', config, (update) => {
   console.log(update.phase, update.durationMs)
 })
 
-// Report (host fetches AW and formats context first)
+// Report (host fetches AW buckets/events via HTTP, then lib aggregates + formats)
+const summary = buildActivitySummary(
+  buckets,
+  eventsByBucket,
+  pagesByBucket,
+  { start, end, label: 'Yesterday (full calendar day, local time)' },
+  { hostname: Deno.hostname() },
+)
+const activityContext = formatActivityContext(summary)
+
 const result = await generateReport(
   {
     userPrompt: 'Summarize my work yesterday',
-    activityContext: formattedAwBlock,
+    activityContext,
     config,
   },
   (phase) => {
@@ -126,15 +141,25 @@ Mirrors [`mod.ts`](./mod.ts).
 
 ### ActivityWatch
 
-| Export                    | Kind     |
-| ------------------------- | -------- |
-| `formatActivityContext`   | function |
-| `resolveActivityRange`    | function |
-| `resolveRangeHours`       | function |
-| `formatActivityWindowLog` | function |
-| `mentionsYesterday`       | function |
-| `mentionsFullHistory`     | function |
-| `ActivityTimeRange`       | type     |
+| Export                      | Kind     |
+| --------------------------- | -------- |
+| `buildActivitySummary`      | function |
+| `formatActivityContext`     | function |
+| `filterEventsInRange`       | function |
+| `aggregateTopActivities`    | function |
+| `aggregateTopWebLinks`      | function |
+| `aggregateMeetingSessions`  | function |
+| `mergeTopActivities`        | function |
+| `isWorkRelatedUrl`          | function |
+| `pickBucket`                | function |
+| `watcherFromBucketId`       | function |
+| `resolveActivityRange`      | function |
+| `resolveRangeHours`         | function |
+| `formatActivityWindowLog`   | function |
+| `mentionsYesterday`         | function |
+| `mentionsFullHistory`       | function |
+| `ActivityTimeRange`         | type     |
+| `BuildActivitySummaryOptions` | type   |
 
 ### Assets (advanced)
 
@@ -174,7 +199,14 @@ Prefer `initJerryLib` for setup. These are escape hatches for custom prompt keys
 | `LlmStatusPhase`      | type |
 | `LlmStatusUpdate`     | type |
 | `AwActivitySummary`   | type |
+| `AwActivityResult`    | type |
+| `AwActivityError`     | type |
 | `Bucket`              | type |
+| `RawEvent`            | type |
+| `TopActivity`         | type |
+| `WebLinkActivity`     | type |
+| `MeetingSession`      | type |
+| `LatestWatcherEvent`  | type |
 | `WatcherKind`         | type |
 
 ## Check
