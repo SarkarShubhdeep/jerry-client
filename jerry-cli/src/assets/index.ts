@@ -78,7 +78,7 @@ let initialized = false
 /**
  * Initialize a3t with a filesystem-only layered backend.
  *
- * Resolution order: local overrides → shipped defaults → inline default passed to getPrompt().
+ * Resolution order: local overrides → shipped defaults → empty fallback passed to getPrompt().
  *
  * Future org-wide overrides can add a database backend here, e.g.:
  *   db: { mongodb: { client, database: 'jerry', collection: 'assets' } }

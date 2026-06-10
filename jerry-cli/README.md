@@ -100,6 +100,19 @@ While a report runs, stderr shows a spinner (`-`, `\`, `|`, `/`) with the curren
 
 Each `ask` and `report` run is isolated: **no chat history**.
 
+## Prompt assets
+
+LLM system prompts ship as text files under [`assets/prompts/`](assets/prompts/). Override locally without rebuilding:
+
+```bash
+mkdir -p ~/.config/jerry/assets/prompts
+cp assets/prompts/report.txt ~/.config/jerry/assets/prompts/report.txt
+# edit the copy, then rerun jerry — changes apply on the next command
+deno task jerry report "yesterday"
+```
+
+See [`assets/README.md`](assets/README.md) for layout, template variables, and revert steps.
+
 ## Development
 
 ```bash
