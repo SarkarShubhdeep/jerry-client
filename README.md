@@ -39,18 +39,28 @@ Get the latest **macOS .dmg** from [GitHub Releases](https://github.com/SarkarSh
 
 **Demo:** [Watch the Jerry CLI intro (YouTube Short)](https://youtube.com/shorts/_uOKAzkYQCI?si=HxvVj9MbRIvwimyT)
 
-A **standalone** command-line tool in [`jerry-cli/`](jerry-cli/) for stateless work reports (ActivityWatch + OpenAI → `.md` files). It does **not** use or require the Electron app.
+A **standalone** command-line tool in [`jerry-cli/`](jerry-cli/) for stateless work reports (ActivityWatch + OpenAI → `.md` files). It does **not** use or require the Electron app. Runs on **Deno** (see [jerry-cli/README.md](jerry-cli/README.md)).
 
 ```bash
 cd jerry-cli
-npm install && npm run build
-export OPENAI_API_KEY=sk-...
-./jerry report "give me report of my past hour work"
+deno task jerry config set openai-api-key
+deno task jerry report today
 ```
 
-Use **`./jerry`** from inside `jerry-cli/` (the local wrapper script). A global `jerry` command is optional — run `npm link` in `jerry-cli/` if you want it on your PATH.
+### Dynamic Prompts
 
-See [jerry-cli/README.md](jerry-cli/README.md) for config, `ask`, calendar date ranges, branching (`jerry-cli/main`), and release tarball (`npm run pack:release`). Tracking issues: [#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12).
+LLM prompts are managed by [a3t](https://github.com/mieweb/a3t) as text files. Override a prompt locally to test changes without rebuilding:
+
+```bash
+mkdir -p ~/.config/jerry/assets/prompts
+cp jerry-cli/assets/prompts/report.txt ~/.config/jerry/assets/prompts/report.txt
+# edit the copy, then rerun — changes apply on the next command
+deno task jerry report yesterday
+```
+
+See [docs/a3t-usage.md](docs/a3t-usage.md) for the full override workflow, template variables, and contributor guide.
+
+See [jerry-cli/README.md](jerry-cli/README.md) for config, `ask`, calendar date ranges, and branching. Tracking issues: [#10](https://github.com/SarkarShubhdeep/jerry-client/issues/10)–[#12](https://github.com/SarkarShubhdeep/jerry-client/issues/12); a3t integration: [#16](https://github.com/SarkarShubhdeep/jerry-client/issues/16)–[#21](https://github.com/SarkarShubhdeep/jerry-client/issues/21).
 
 ## Develop from source
 
