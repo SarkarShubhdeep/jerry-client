@@ -1,48 +1,65 @@
 # Jerry CLI: A3T Integration Handover
 
+> **For usage and override workflow, see [a3t-usage.md](a3t-usage.md).**
+
 ## Project Overview
 
-**Jerry** is a terminal-first productivity and reporting tool. To align with technical preferences, this project explicitly avoids GUI/Electron frameworks in favor of a fast, native CLI experience. The application runs on **Deno** and leverages the **A3T** (Universal Overridable Asset Loader) library to manage LLM prompts and system configurations as dynamically loaded string assets.
+**Jerry CLI** is a terminal-first productivity and reporting tool in the `jerry-cli/` package. It runs on **Deno** and uses **A3T** (Universal Overridable Asset Loader) to manage LLM prompts as dynamically loaded string assets.
 
 ## Core Architecture
 
-- **Runtime:** Deno (preferred over Node.js for this implementation)
-- **Asset Management:** A3T (loads and overrides prompts/configs)
-- **Interface:** Terminal/CLI with active state feedback (e.g., "loading asset...", "thinking...", "searching web...")
-- **Data Sources:** Local telemetry integration, specifically ActivityWatch (AW) data.
+- **Runtime:** Deno
+- **Asset management:** A3T with a layered filesystem backend (local override → shipped default)
+- **Interface:** Terminal/CLI with spinner feedback during report generation
+- **Data sources:** ActivityWatch (localhost HTTP API)
 
 ## A3T Integration Strategy
 
-Instead of hardcoding operational logic, Jerry uses A3T to manage LLM prompts as string assets.
+Instead of hardcoding prompts, Jerry CLI loads them via a3t:
 
-- **Default Assets:** Shipped with the CLI (e.g., `prompts/report_daily.md`, `prompts/fetch_aw_data.md`).
-- **The Override Mechanism:** A3T's primary value here is seamless local overriding. If a user needs to tweak the behavior of the daily report (e.g., changing the tone or structure), they simply place a modified prompt file in their local environment (e.g., `~/.jerry/assets/report_daily.md`). A3T will automatically prioritize this local asset over the default.
+- **Shipped defaults:** `jerry-cli/assets/prompts/ask.txt`, `report.txt`, `recheck.txt`
+- **Local overrides:** `~/.config/jerry/assets/` (or custom `a3t.overridePath` in `cli.json`)
 
-### Key Prompt Assets (Managed via A3T)
+### Key Prompt Assets
 
-1.  `fetch_aw_data`: Instructions for the LLM on how to parse and format ActivityWatch logs.
-2.  `capture_snapshot`: Prompt logic for summarizing the current desktop/window state.
-3.  `generate_report`: The core prompt for synthesizing the day's data into a coherent summary.
+| File | Purpose |
+|------|---------|
+| `prompts/ask.txt` | `jerry ask` system prompt |
+| `prompts/report.txt` | `jerry report` generation prompt |
+| `prompts/recheck.txt` | Post-draft report review prompt |
+
+Template variables `{{modelId}}` and `{{activityContext}}` are injected at runtime. See [a3t-usage.md](a3t-usage.md).
 
 ## CLI Workflow & Commands
 
-### 1. `jerry start`
+Implemented commands (run from `jerry-cli/`):
 
-Initializes the daemon/terminal session. Bootstraps the A3T loader, checks the filesystem for any local asset overrides, and establishes the Deno runtime environment.
+```bash
+deno task jerry report today       # current day (midnight → now)
+deno task jerry report yesterday   # prior full calendar day
+deno task jerry report "May 13 to May 20"   # custom date range
+deno task jerry ask "your question"
+deno task jerry config
+```
 
-### 2. `jerry report daily`
+Report workflow:
 
-Triggers the end-of-day reporting workflow:
+1. CLI resolves the `report.txt` prompt via a3t (override or shipped default)
+2. Fetches ActivityWatch data for the requested time range
+3. Injects `{{activityContext}}` and `{{modelId}}` into the prompt
+4. Calls OpenAI and writes a `.md` report (or prints with `--stdout`)
 
-1.  CLI fetches the `generate_report` prompt via A3T.
-2.  Provides standard terminal feedback: `[⠧] Loading daily asset report generator from A3T...`
-3.  Injects ActivityWatch data and snapshots into the prompt context.
-4.  Provides LLM processing feedback: `[⠧] Thinking...` -> `[⠧] Generating report...`
-5.  Outputs the finalized markdown report to the terminal.
+There is no `jerry start` daemon or `report daily` subcommand — use `report today` or `report yesterday`.
 
-## Instructions for the AI Agent (Cursor/Opus)
+## Implementation Status
 
-1.  **Scaffold the Deno CLI:** Set up the basic CLI command routing structure (`start`, `report`).
-2.  **Integrate A3T:** Implement the A3T loader to fetch the string assets. Ensure the override fallback directory structure is correctly configured so local prompt modifications work out-of-the-box.
-3.  **Mock the LLM Pipeline:** Set up the scaffolding for the LLM calls that will eventually consume these A3T-managed prompts.
-4.  **Implement CLI UX:** Integrate a terminal spinner/loader library to mimic the smooth state transitions discussed in the workflow (e.g., similar to the Claude CLI).
+| Phase | Issue | Status |
+|-------|-------|--------|
+| Deno migration | [#16](https://github.com/SarkarShubhdeep/jerry-client/issues/16) | Done |
+| a3t filesystem backend | [#17](https://github.com/SarkarShubhdeep/jerry-client/issues/17) | Done |
+| Extract prompts to a3t | [#18](https://github.com/SarkarShubhdeep/jerry-client/issues/18) | Done |
+| Ship default assets | [#19](https://github.com/SarkarShubhdeep/jerry-client/issues/19) | Done |
+| `report today` / time ranges | [#20](https://github.com/SarkarShubhdeep/jerry-client/issues/20) | Done |
+| Documentation | [#21](https://github.com/SarkarShubhdeep/jerry-client/issues/21) | Done |
+
+Code: `jerry-cli/src/assets/index.ts`, `jerry-cli/src/llm/prompt.ts`.

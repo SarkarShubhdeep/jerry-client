@@ -106,16 +106,20 @@ Each `ask` and `report` run is isolated: **no chat history**.
 
 ## Prompt assets
 
-LLM system prompts ship as text files under [`assets/prompts/`](assets/prompts/). Override locally without rebuilding:
+LLM system prompts ship as text files under [`assets/prompts/`](assets/prompts/) and are loaded by [a3t](https://github.com/mieweb/a3t). Resolution order: **local override** (`~/.config/jerry/assets/`) → **shipped default** (`jerry-cli/assets/`) → **inline fallback** (empty string if no file exists). Delete an override to revert to the shipped version.
+
+Canonical guide: [docs/a3t-usage.md](../docs/a3t-usage.md). Layout and template variables: [`assets/README.md`](assets/README.md).
+
+### Test a prompt change
 
 ```bash
 mkdir -p ~/.config/jerry/assets/prompts
-cp assets/prompts/report.txt ~/.config/jerry/assets/prompts/report.txt
-# edit the copy, then rerun jerry — changes apply on the next command
-deno task jerry report "yesterday"
+cp jerry-cli/assets/prompts/report.txt ~/.config/jerry/assets/prompts/report.txt
+# Edit ~/.config/jerry/assets/prompts/report.txt
+deno task jerry report "yesterday"  # uses override immediately
 ```
 
-See [`assets/README.md`](assets/README.md) for layout, template variables, and revert steps.
+When the override works, copy it back to `jerry-cli/assets/prompts/` and commit.
 
 ## Development
 
