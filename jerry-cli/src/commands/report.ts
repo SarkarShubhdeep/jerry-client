@@ -1,19 +1,21 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {
+  type ActivityTimeRange,
+  formatActivityContext,
+  formatActivityWindowLog,
+  generateReport,
+  type ReportPhase,
+  resolveActivityRange,
+  resolveRangeHours,
+} from '@jerry/lib'
+import {
   checkActivityWatchConnection,
   fetchActivitySummary,
   listActivityWatchBuckets,
 } from '../aw/client.ts'
-import { formatActivityContext } from '../llm/activity-context.ts'
-import { generateReport } from '../llm/client.ts'
-import {
-  type ActivityTimeRange,
-  formatActivityWindowLog,
-  resolveActivityRange,
-  resolveRangeHours,
-} from '../llm/activity-intent.ts'
 import { ensureReportsDir, type JerryCliConfig, loadConfig } from '../config.ts'
+import { labelForReportPhase } from '../llm-labels.ts'
 import { Spinner } from '../spinner.ts'
 
 export type ReportOptions = {
@@ -78,8 +80,16 @@ export async function runReport(options: ReportOptions): Promise<string> {
 
     spinner.start('Starting report…')
 
+    spinner.update('Reading ActivityWatch…')
+    const summary = await fetchActivitySummary(activityRange)
+    if (!summary.connected) {
+      throw new Error(summary.error)
+    }
+    const activityContext = formatActivityContext(summary)
+
     let lastLabel = ''
-    const onProgress = (label: string): void => {
+    const onProgress = (phase: ReportPhase): void => {
+      const label = labelForReportPhase(phase)
       if (lastLabel && lastLabel !== label) {
         spinner.markStep(lastLabel)
       }
@@ -89,11 +99,13 @@ export async function runReport(options: ReportOptions): Promise<string> {
     }
 
     const response = await generateReport(
-      prompt,
-      activityRange,
       {
-        apiKey: config.openaiApiKey,
-        model: config.openaiModel,
+        userPrompt: prompt,
+        activityContext,
+        config: {
+          apiKey: config.openaiApiKey,
+          model: config.openaiModel,
+        },
       },
       onProgress,
     )
@@ -148,11 +160,7 @@ async function dryRunReport(
     }
 
     spinner.update('Reading ActivityWatch events…')
-    const summary = await fetchActivitySummary({
-      start: activityRange.start,
-      end: activityRange.end,
-      label: activityRange.label,
-    })
+    const summary = await fetchActivitySummary(activityRange)
     if (!summary.connected) {
       throw new Error(summary.error)
     }

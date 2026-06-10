@@ -1,6 +1,6 @@
+import { ask, type LlmStatusUpdate } from '@jerry/lib'
 import { loadConfig } from '../config.ts'
-import { askQuestion } from '../llm/client.ts'
-import type { LlmStatusUpdate } from '../llm/status.ts'
+import { labelForLlmStatus } from '../llm-labels.ts'
 import { Spinner } from '../spinner.ts'
 
 function bindSpinnerProgress(spinner: Spinner): {
@@ -10,7 +10,7 @@ function bindSpinnerProgress(spinner: Spinner): {
   let lastLabel = ''
 
   const onStatus = (update: LlmStatusUpdate): void => {
-    const label = update.label
+    const label = labelForLlmStatus(update)
     if (!label) return
 
     if (lastLabel && lastLabel !== label) {
@@ -43,7 +43,7 @@ export async function runAsk(question: string): Promise<void> {
 
   try {
     spinner.start('Thinking…')
-    const answer = await askQuestion(
+    const answer = await ask(
       trimmed,
       {
         apiKey: config.openaiApiKey,
