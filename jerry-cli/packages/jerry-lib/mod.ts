@@ -3,37 +3,51 @@
  *
  * No CLI, no stdout, no Cliffy. Hosts (jerry-cli, Electron, web backend) supply
  * I/O boundaries: config loading, AW HTTP fetches, and user-facing output.
+ *
+ * Public API groupings below mirror packages/jerry-lib/README.md.
  */
 
+// --- Init ---
 export { initJerryLib, type JerryLibInitOptions } from './src/init.ts'
 
+// --- LLM ---
 export { ask } from './src/llm/ask.ts'
 export { generateReport, recheckReport } from './src/llm/report.ts'
 
+// --- ActivityWatch ---
 export { formatActivityContext } from './src/aw/format.ts'
 export {
+  type ActivityTimeRange,
+  formatActivityWindowLog,
+  mentionsFullHistory,
+  mentionsYesterday,
   resolveActivityRange,
   resolveRangeHours,
-  formatActivityWindowLog,
-  mentionsYesterday,
-  mentionsFullHistory,
-  type ActivityTimeRange,
 } from './src/aw/intent.ts'
 
-export { initAssets, getPrompt, clearAssetCache, type AssetsInitOptions } from './src/assets/index.ts'
+// --- Assets (advanced; prefer initJerryLib for prompt setup) ---
+export {
+  type AssetsInitOptions,
+  clearAssetCache,
+  getPrompt,
+  initAssets,
+} from './src/assets/index.ts'
 
+// --- Models ---
 export {
   DEFAULT_OPENAI_MODEL,
-  OPENAI_MODEL_IDS,
   isAllowedOpenAiModel,
+  OPENAI_MODEL_IDS,
   type OpenAiModelId,
 } from './src/llm/models.ts'
 
+// --- Types ---
 export type {
-  JerryLlmConfig,
-  ReportProgress,
   GenerateReportInput,
+  JerryLlmConfig,
   RecheckReportInput,
+  ReportPhase,
+  ReportProgress,
   ReportResult,
 } from './src/types.ts'
 

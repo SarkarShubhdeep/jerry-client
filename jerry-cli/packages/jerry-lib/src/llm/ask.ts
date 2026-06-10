@@ -12,14 +12,6 @@ function emitStatus(
   onStatus?.(update)
 }
 
-function formatWebSearchDone(durationMs: number | undefined): string {
-  if (!durationMs || durationMs < 1000) {
-    return 'Searched web'
-  }
-  const seconds = Math.max(1, Math.round(durationMs / 1000))
-  return `Searched web for ${seconds}s`
-}
-
 function shouldFallbackToCompletions(err: unknown): boolean {
   if (!(err instanceof Error)) return false
   const msg = err.message.toLowerCase()
@@ -60,7 +52,7 @@ async function askViaResponses(
     switch (event.type) {
       case 'response.in_progress':
       case 'response.created':
-        emitStatus(onStatus, { phase: 'thinking', label: 'Thinking…' })
+        emitStatus(onStatus, { phase: 'thinking' })
         break
 
       case 'response.web_search_call.in_progress':
@@ -68,27 +60,20 @@ async function askViaResponses(
         if (!webSearchSearchingEmitted) {
           webSearchSearchingEmitted = true
           webSearchStartedAt = Date.now()
-          emitStatus(onStatus, {
-            phase: 'web_search_searching',
-            label: 'Searching web…',
-          })
+          emitStatus(onStatus, { phase: 'web_search_searching' })
         }
         break
 
       case 'response.web_search_call.completed': {
         const durationMs = webSearchStartedAt ? Date.now() - webSearchStartedAt : undefined
-        emitStatus(onStatus, {
-          phase: 'web_search_done',
-          label: formatWebSearchDone(durationMs),
-          durationMs,
-        })
+        emitStatus(onStatus, { phase: 'web_search_done', durationMs })
         break
       }
 
       case 'response.output_text.delta':
         if (!finalizingEmitted) {
           finalizingEmitted = true
-          emitStatus(onStatus, { phase: 'finalizing', label: 'Finalizing answer…' })
+          emitStatus(onStatus, { phase: 'finalizing' })
         }
         text += event.delta
         break
@@ -98,7 +83,7 @@ async function askViaResponses(
         if (!content) {
           throw new Error('No response from the model')
         }
-        emitStatus(onStatus, { phase: 'done', label: 'Done' })
+        emitStatus(onStatus, { phase: 'done' })
         return content
       }
 
@@ -114,7 +99,7 @@ async function askViaResponses(
   }
 
   if (text.trim()) {
-    emitStatus(onStatus, { phase: 'done', label: 'Done' })
+    emitStatus(onStatus, { phase: 'done' })
     return text.trim()
   }
 
@@ -127,7 +112,7 @@ async function askViaCompletions(
   question: string,
   onStatus?: LlmStatusCallback,
 ): Promise<string> {
-  emitStatus(onStatus, { phase: 'thinking', label: 'Thinking…' })
+  emitStatus(onStatus, { phase: 'thinking' })
 
   let finalizingEmitted = false
   let text = ''
@@ -147,7 +132,7 @@ async function askViaCompletions(
 
     if (!finalizingEmitted) {
       finalizingEmitted = true
-      emitStatus(onStatus, { phase: 'finalizing', label: 'Finalizing answer…' })
+      emitStatus(onStatus, { phase: 'finalizing' })
     }
     text += delta
   }
@@ -157,7 +142,7 @@ async function askViaCompletions(
     throw new Error('No response from the model')
   }
 
-  emitStatus(onStatus, { phase: 'done', label: 'Done' })
+  emitStatus(onStatus, { phase: 'done' })
   return content
 }
 
@@ -171,7 +156,7 @@ export async function ask(
   const modelId = resolveModel(config.model)
   const client = new OpenAI({ apiKey })
 
-  emitStatus(onStatus, { phase: 'thinking', label: 'Thinking…' })
+  emitStatus(onStatus, { phase: 'thinking' })
 
   try {
     return await askViaResponses(client, modelId, question, onStatus)

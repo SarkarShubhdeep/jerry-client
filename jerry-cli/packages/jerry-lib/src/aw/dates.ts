@@ -29,7 +29,7 @@ const MONTH_PATTERN =
   'january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec'
 
 export const NO_TIME_RANGE_ERROR =
-  'No time range in your prompt. Examples: "today", "yesterday", "June 1", "May 10 to May 13", "May 10 to May 13 2026", "last 2 hours", or jerry report --hours 8 "..."'
+  'No time range in your prompt. Examples: "today", "yesterday", "June 1", "May 10 to May 13", "May 10 to May 13 2026", "last 2 hours", or pass an explicit hours parameter'
 
 type DateParts = { year: number; month: number; day: number }
 

@@ -1,4 +1,4 @@
-import { initAssets, type AssetsInitOptions } from './assets/index.ts'
+import { type AssetsInitOptions, initAssets } from './assets/index.ts'
 
 export type JerryLibInitOptions = {
   /** a3t layered filesystem roots. Call once per process before using ask/report. */

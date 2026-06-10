@@ -7,7 +7,8 @@ export type LlmStatusPhase =
 
 export type LlmStatusUpdate = {
   phase: LlmStatusPhase
-  label: string
+  /** Optional; hosts map phase codes to UI copy. */
+  label?: string
   durationMs?: number
 }
 

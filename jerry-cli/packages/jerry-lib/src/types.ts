@@ -6,7 +6,9 @@ export type JerryLlmConfig = {
   model: string
 }
 
-export type ReportProgress = (phase: string) => void
+export type ReportPhase = 'writing' | 'rechecking'
+
+export type ReportProgress = (phase: ReportPhase) => void
 
 /** Pure report input: host fetches ActivityWatch and formats context before calling. */
 export type GenerateReportInput = {
