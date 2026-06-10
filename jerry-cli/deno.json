@@ -9,7 +9,8 @@
     "fmt": "deno fmt src",
     "check": "deno check src/**/*.ts",
     "check:lib": "deno check packages/jerry-lib/mod.ts packages/jerry-lib/examples/minimal.ts",
-    "test": "deno test --allow-read --allow-write --allow-env --allow-sys src/"
+    "test": "deno test --allow-read --allow-write --allow-env --allow-sys src/",
+    "test:lib": "deno test --allow-read --allow-write packages/jerry-lib/"
   },
   "compilerOptions": {
     "strict": true,

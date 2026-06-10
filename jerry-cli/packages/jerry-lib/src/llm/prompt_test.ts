@@ -39,7 +39,7 @@ Deno.test('getAskPrompt loads repo shipped default ask.txt', async () => {
   const prompt = await getAskPrompt('test-model')
   assertStringIncludes(prompt, 'test-model')
   assertStringIncludes(prompt, 'You are Jerry, a helpful command-line assistant.')
-  assertStringIncludes(prompt, 'jerry report')
+  assertStringIncludes(prompt, 'work-report feature')
 })
 
 Deno.test('getAskPrompt prefers local override and injects modelId', async () => {

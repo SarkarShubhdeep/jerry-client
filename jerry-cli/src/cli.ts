@@ -1,9 +1,13 @@
 #!/usr/bin/env -S deno run --allow-net --allow-read --allow-write --allow-env --allow-sys
 import { load as loadDotenv } from '@std/dotenv'
 import { Command } from '@cliffy/command'
+import { initJerryLib } from '@jerry/lib'
 import { runAsk } from './commands/ask.ts'
 import { runReport } from './commands/report.ts'
 import { removeConfig, runConfigMenu, setConfig, showConfig } from './commands/config-cmd.ts'
+import { resolveA3tOverrideDir } from './config.ts'
+
+initJerryLib({ assets: { overridePath: resolveA3tOverrideDir() } })
 
 // Load .env file if it exists in the jerry-cli directory
 const jerryCliDir = new URL('.', import.meta.url).pathname.replace('/src/', '/')
