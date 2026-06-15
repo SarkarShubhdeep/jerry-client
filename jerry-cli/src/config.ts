@@ -108,7 +108,7 @@ export function loadConfig(): JerryCliConfig {
 
   const envModel = Deno.env.get('OPENAI_MODEL')?.trim()
   const fileModel = file.openaiModel?.trim()
-  let openaiModel = DEFAULT_OPENAI_MODEL
+  let openaiModel: string = DEFAULT_OPENAI_MODEL
   let openaiModelSource: JerryCliConfig['openaiModelSource'] = 'default'
   if (envModel) {
     openaiModel = isAllowedOpenAiModel(envModel) ? envModel : DEFAULT_OPENAI_MODEL

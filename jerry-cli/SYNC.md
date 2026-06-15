@@ -19,6 +19,6 @@ Logic in `jerry-cli/src/` was copied from the Electron main process for an **ind
 
 ## Prompt assets
 
-CLI prompts are **a3t-managed** under `jerry-cli/assets/prompts/` (`ask.txt`, `report.txt`, `recheck.txt`). They are no longer synced line-by-line from `electron/llm/prompt.ts`.
+CLI prompts are **a3t-managed**. Shipped defaults are bundled in [@sarkarshubhdeep/jerry-lib](https://jsr.io/@sarkarshubhdeep/jerry-lib) (`assets/prompts/` in [SarkarShubhdeep/jerry-lib](https://github.com/SarkarShubhdeep/jerry-lib)). jerry-cli does not embed prompt files.
 
 The desktop app still uses inline prompts in `electron/llm/prompt.ts`. Consider adopting a3t there later for parity. See [docs/a3t-usage.md](../docs/a3t-usage.md).
