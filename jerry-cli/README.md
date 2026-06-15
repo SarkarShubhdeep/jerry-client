@@ -108,7 +108,7 @@ Each `ask` and `report` run is isolated: **no chat history**.
 
 LLM system prompts ship inside [@sarkarshubhdeep/jerry-lib](https://jsr.io/@sarkarshubhdeep/jerry-lib) and are loaded by [a3t](https://github.com/mieweb/a3t). Resolution order: **local override** (`~/.config/jerry/assets/`) → **shipped default** (JSR package) → **inline fallback** (empty string if no file exists). Delete an override to revert to the shipped version.
 
-Canonical guide: [docs/a3t-usage.md](../docs/a3t-usage.md). Shipped prompt source: [jerry-lib `assets/prompts/`](https://github.com/SarkarShubhdeep/jerry-lib/tree/main/assets/prompts).
+Canonical guides (jerry-lib): [docs/a3t-prompts.md](https://github.com/SarkarShubhdeep/jerry-lib/blob/main/docs/a3t-prompts.md) · [docs/host-integration.md](https://github.com/SarkarShubhdeep/jerry-lib/blob/main/docs/host-integration.md). Shipped prompt source: [jerry-lib `assets/prompts/`](https://github.com/SarkarShubhdeep/jerry-lib/tree/main/assets/prompts).
 
 ### Test a prompt change
 
