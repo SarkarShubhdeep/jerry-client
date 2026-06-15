@@ -1,6 +1,5 @@
 {
   "version": "0.1.0",
-  "workspace": ["./packages/jerry-lib"],
   "tasks": {
     "jerry": "deno run --allow-read --allow-write --allow-net --allow-env --allow-sys src/cli.ts",
     "report": "deno run --allow-read --allow-write --allow-net --allow-env --allow-sys src/cli.ts report",
@@ -8,21 +7,18 @@
     "lint": "deno lint src",
     "fmt": "deno fmt src",
     "check": "deno check src/**/*.ts",
-    "check:lib": "deno check packages/jerry-lib/mod.ts packages/jerry-lib/examples/minimal.ts",
-    "test": "deno test --allow-read --allow-write --allow-env --allow-sys src/",
-    "test:lib": "deno test --allow-read --allow-write packages/jerry-lib/"
+    "test": "deno test --allow-read --allow-write --allow-env --allow-sys src/"
   },
   "compilerOptions": {
     "strict": true,
     "lib": ["deno.window", "deno.ns"]
   },
   "imports": {
-    "@jerry/lib": "./packages/jerry-lib/mod.ts",
     "@cliffy/prompt": "jsr:@cliffy/prompt@^1.0.0-rc.7",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
+    "@jerry/lib": "jsr:@sarkarshubhdeep/jerry-lib@^0.1.1",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
-    "openai": "npm:openai@^6.41.0",
-    "a3t": "https://raw.githubusercontent.com/mieweb/a3t/115171ecb6d1dca856295b8e8f2a4346126ef07f/deno.ts"
+    "openai": "npm:openai@^6.41.0"
   },
   "exclude": [
     "node_modules",
@@ -45,5 +41,9 @@
     "rules": {
       "tags": ["recommended"]
     }
+  },
+  "allowScripts": {
+    "allow": [],
+    "deny": ["npm:deno@2.8.3"]
   }
 }

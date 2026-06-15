@@ -36,8 +36,6 @@ jobs:
         run: deno task build
       - name: Lint
         run: deno task lint
-      - name: Test jerry-lib
-        run: deno test --allow-read --allow-write packages/jerry-lib/
       - name: Test
         run: deno task test
       - name: Check formatting

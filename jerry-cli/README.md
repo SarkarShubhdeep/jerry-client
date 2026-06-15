@@ -106,20 +106,21 @@ Each `ask` and `report` run is isolated: **no chat history**.
 
 ## Prompt assets
 
-LLM system prompts ship as text files under [`assets/prompts/`](assets/prompts/) and are loaded by [a3t](https://github.com/mieweb/a3t). Resolution order: **local override** (`~/.config/jerry/assets/`) → **shipped default** (`jerry-cli/assets/`) → **inline fallback** (empty string if no file exists). Delete an override to revert to the shipped version.
+LLM system prompts ship inside [@sarkarshubhdeep/jerry-lib](https://jsr.io/@sarkarshubhdeep/jerry-lib) and are loaded by [a3t](https://github.com/mieweb/a3t). Resolution order: **local override** (`~/.config/jerry/assets/`) → **shipped default** (JSR package) → **inline fallback** (empty string if no file exists). Delete an override to revert to the shipped version.
 
-Canonical guide: [docs/a3t-usage.md](../docs/a3t-usage.md). Layout and template variables: [`assets/README.md`](assets/README.md).
+Canonical guide: [docs/a3t-usage.md](../docs/a3t-usage.md). Shipped prompt source: [jerry-lib `assets/prompts/`](https://github.com/SarkarShubhdeep/jerry-lib/tree/main/assets/prompts).
 
 ### Test a prompt change
 
 ```bash
 mkdir -p ~/.config/jerry/assets/prompts
-cp jerry-cli/assets/prompts/report.txt ~/.config/jerry/assets/prompts/report.txt
+curl -o ~/.config/jerry/assets/prompts/report.txt \
+  https://raw.githubusercontent.com/SarkarShubhdeep/jerry-lib/main/assets/prompts/report.txt
 # Edit ~/.config/jerry/assets/prompts/report.txt
 deno task jerry report "yesterday"  # uses override immediately
 ```
 
-When the override works, copy it back to `jerry-cli/assets/prompts/` and commit.
+When the override works, open a PR in [SarkarShubhdeep/jerry-lib](https://github.com/SarkarShubhdeep/jerry-lib) with the updated prompt.
 
 ## Development
 
