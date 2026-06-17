@@ -16,7 +16,8 @@ protocol.registerSchemesAsPrivileged([
 import { registerAwIpc } from './ipc/aw'
 import { registerLlmIpc } from './ipc/llm'
 import { registerSettingsIpc } from './ipc/settings'
-import { migrateEnvApiKeyOnce } from './store/settings'
+import { initJerryLibRuntime } from './jerry-lib-runtime'
+import { migrateEnvApiKeyOnce, syncDefaultModelFromLib } from './store/settings'
 
 // Optional dev overrides (e.g. ACTIVITYWATCH_BASE_URL). LLM keys are set in-app only.
 loadEnv({ path: path.join(__dirname, '..', '.env') })
@@ -62,11 +63,16 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await initJerryLibRuntime({
+    assets: { overridePath: path.join(app.getPath('userData'), 'assets') },
+  })
+
   if (!isDev) {
     registerAppUrlScheme()
   }
   migrateEnvApiKeyOnce()
+  syncDefaultModelFromLib()
   registerAwIpc()
   registerLlmIpc()
   registerSettingsIpc()

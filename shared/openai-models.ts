@@ -1,4 +1,4 @@
-/** Keep OPENAI_MODEL_IDS in electron/llm/models.ts in sync when adding models. */
+/** Keep OPENAI_MODEL_IDS in sync with @sarkarshubhdeep/jerry-lib when adding models. */
 export const DEFAULT_OPENAI_MODEL = 'gpt-4o-mini'
 
 export const OPENAI_MODEL_GROUPS = [

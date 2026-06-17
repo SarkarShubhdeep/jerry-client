@@ -1,5 +1,5 @@
 import { ipcMain, type WebContents } from 'electron'
-import { chat } from '../llm/client'
+import { chat } from '../llm/chat-host'
 import type { LlmStatusUpdate } from '../llm/status'
 import type { ChatMessage, ChatRequest, ChatResponse } from '../llm/types'
 import { getApiKey } from '../store/settings'

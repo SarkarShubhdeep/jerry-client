@@ -1,5 +1,5 @@
 import Store from 'electron-store'
-import { DEFAULT_OPENAI_MODEL, isAllowedOpenAiModel } from '../llm/models'
+import { jerryLib } from '../jerry-lib-runtime'
 
 export type Theme = 'light' | 'dark'
 export type ApiProvider = 'openai' | 'anthropic'
@@ -11,13 +11,17 @@ type SettingsSchema = {
   openaiModel: string
 }
 
+function defaultOpenAiModel(): string {
+  return jerryLib().DEFAULT_OPENAI_MODEL
+}
+
 const store = new Store<SettingsSchema>({
   name: 'jerry-settings',
   defaults: {
     openaiApiKey: '',
     anthropicApiKey: '',
     theme: 'dark',
-    openaiModel: DEFAULT_OPENAI_MODEL,
+    openaiModel: 'gpt-4o-mini',
   },
 })
 
@@ -76,6 +80,7 @@ export function setTheme(theme: Theme): void {
 }
 
 export function getModel(): string {
+  const { isAllowedOpenAiModel, DEFAULT_OPENAI_MODEL } = jerryLib()
   const model = store.get('openaiModel')
   if (typeof model === 'string' && isAllowedOpenAiModel(model)) {
     return model
@@ -84,6 +89,7 @@ export function getModel(): string {
 }
 
 export function setModel(model: string): void {
+  const { isAllowedOpenAiModel } = jerryLib()
   if (!isAllowedOpenAiModel(model)) {
     throw new Error('Invalid OpenAI model')
   }
@@ -129,5 +135,13 @@ export function setSetting(key: SettingsKey, value: string): void {
       break
     default:
       break
+  }
+}
+
+// Used after initJerryLibRuntime to align store default with lib constant.
+export function syncDefaultModelFromLib(): void {
+  const model = store.get('openaiModel')
+  if (typeof model !== 'string' || !model.trim()) {
+    store.set('openaiModel', defaultOpenAiModel())
   }
 }

@@ -1,5 +1,9 @@
 import { ipcMain } from 'electron'
-import { checkActivityWatchConnection, fetchActivitySummary } from '../aw/client'
+import {
+  checkActivityWatchConnection,
+  fetchActivitySummary,
+  rangeFromHours,
+} from '../aw/client'
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
@@ -22,7 +26,7 @@ export function registerAwIpc(): void {
           : 5
 
       try {
-        const data = await fetchActivitySummary(rangeHours)
+        const data = await fetchActivitySummary(rangeFromHours(rangeHours))
         if (!data.connected) {
           return { ok: false, error: data.error }
         }

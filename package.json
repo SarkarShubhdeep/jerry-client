@@ -1,6 +1,6 @@
 {
   "name": "jerry-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Jerry — local Electron app for work narratives from ActivityWatch",
   "main": "dist-electron/main.js",
@@ -15,6 +15,7 @@
     "package": "npm run build && electron-builder --mac"
   },
   "dependencies": {
+    "@sarkarshubhdeep/jerry-lib": "npm:@jsr/sarkarshubhdeep__jerry-lib@^0.1.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

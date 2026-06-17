@@ -1,40 +1,17 @@
 import os from 'os'
-import {
-  aggregateTopActivities,
-  aggregateTopWebLinks,
-  mergeTopActivities,
-} from './aggregate'
-import type {
-  AwActivityResult,
-  Bucket,
-  LatestWatcherEvent,
-  RawEvent,
-  TopActivity,
-  WebLinkActivity,
-  WatcherKind,
-} from './types'
+import type { ActivityTimeRange } from './types'
+import { jerryLib } from '../jerry-lib-runtime'
+import type { AwActivityResult, Bucket, RawEvent, WatcherKind } from './types'
 
 const DEFAULT_BASE_URL = 'http://localhost:5600/api/0'
 const WATCHERS: WatcherKind[] = ['window', 'web', 'vscode', 'afk']
 
-/** Matches aw-mcp get_events max; ActivityWatch returns at most this many per request. */
 export const EVENT_PAGE_SIZE = 1000
-
-/** Safety cap: 50 pages × 1000 = 50k events per bucket per fetch. */
 const MAX_PAGES_PER_BUCKET = 50
 
 function baseUrl(): string {
   const url = process.env.ACTIVITYWATCH_BASE_URL || DEFAULT_BASE_URL
   return url.replace(/\/+$/, '')
-}
-
-export function watcherFromBucketId(bucketId: string): WatcherKind {
-  const id = bucketId.toLowerCase()
-  if (id.includes('aw-watcher-window')) return 'window'
-  if (id.includes('aw-watcher-web')) return 'web'
-  if (id.includes('aw-watcher-vscode')) return 'vscode'
-  if (id.includes('aw-watcher-afk')) return 'afk'
-  return 'other'
 }
 
 async function awFetch(path: string, timeoutMs = 8_000): Promise<Response> {
@@ -133,10 +110,6 @@ export type PaginatedFetchResult = {
   pages: number
 }
 
-/**
- * Fetches every event in [start, end] by paging backward in chunks of EVENT_PAGE_SIZE,
- * same strategy as multi-call aw-mcp get_events when a day exceeds 1000 events.
- */
 export async function fetchAllEventsInRange(
   bucketId: string,
   start: string,
@@ -175,52 +148,12 @@ export async function fetchAllEventsInRange(
   return { events: all, pages }
 }
 
-function pickBucket(buckets: Bucket[], watcher: WatcherKind): Bucket | undefined {
-  const matches = buckets.filter((b) => watcherFromBucketId(b.id) === watcher)
-  if (matches.length === 0) return undefined
+export type ActivityFetchRange = ActivityTimeRange
 
-  const hostname = os.hostname()
-  const hostMatch = matches.find(
-    (b) => b.id.includes(hostname) || b.hostname === hostname
-  )
-  return hostMatch ?? matches[0]
-}
-
-function labelFromEvent(e: RawEvent, watcher: WatcherKind): { app: string; title: string } {
-  const data = e.data ?? {}
-  if (watcher === 'afk') {
-    const status =
-      typeof data.status === 'string' ? data.status : 'unknown'
-    return { app: 'afk', title: status }
-  }
-  const app =
-    (typeof data.app === 'string' && data.app) ||
-    (typeof data.title === 'string' && data.title) ||
-    'Unknown'
-  const title =
-    (typeof data.title === 'string' && data.title) ||
-    (typeof data.url === 'string' && data.url) ||
-    ''
-  return { app, title }
-}
-
-function newestEvent(events: RawEvent[]): RawEvent | undefined {
-  if (events.length === 0) return undefined
-  return events.reduce((newest, e) =>
-    new Date(e.timestamp).getTime() > new Date(newest.timestamp).getTime() ? e : newest
-  )
-}
-
-export type ActivityFetchRange = {
-  start: Date
-  end: Date
-  label: string
-}
-
-function rangeFromHours(rangeHours: number): ActivityFetchRange {
-  const hours = Math.max(rangeHours, 0.25)
+export function rangeFromHours(hours: number): ActivityFetchRange {
   const end = new Date()
-  const start = new Date(end.getTime() - hours * 60 * 60 * 1000)
+  const h = Math.max(hours, 0.25)
+  const start = new Date(end.getTime() - h * 60 * 60 * 1000)
   return {
     start,
     end,
@@ -228,29 +161,12 @@ function rangeFromHours(rangeHours: number): ActivityFetchRange {
   }
 }
 
-function filterEventsInRange(
-  events: RawEvent[],
-  startIso: string,
-  endIso: string
-): RawEvent[] {
-  const startMs = new Date(startIso).getTime()
-  const endMs = new Date(endIso).getTime()
-  return events.filter((e) => {
-    const t = new Date(e.timestamp).getTime()
-    return t >= startMs && t < endMs
-  })
-}
-
 export async function fetchActivitySummary(
-  rangeOrHours: ActivityFetchRange | number
+  range: ActivityFetchRange
 ): Promise<AwActivityResult> {
-  const range =
-    typeof rangeOrHours === 'number' ? rangeFromHours(rangeOrHours) : rangeOrHours
-  const start = range.start
-  const end = range.end
-  const hours = Math.max((end.getTime() - start.getTime()) / (60 * 60 * 1000), 0.25)
-  const startIso = start.toISOString()
-  const endIso = end.toISOString()
+  const { buildActivitySummary, pickBucket } = jerryLib()
+  const startIso = range.start.toISOString()
+  const endIso = range.end.toISOString()
 
   try {
     const buckets = await listActivityWatchBuckets()
@@ -258,78 +174,32 @@ export async function fetchActivitySummary(
       return { connected: false, error: 'No ActivityWatch buckets found. Is a watcher running?' }
     }
 
-    const latest: LatestWatcherEvent[] = []
-    const perWatcherTop: TopActivity[] = []
-    let topWebLinks: WebLinkActivity[] = []
-    const eventCounts: Partial<Record<WatcherKind, number>> = {}
-    const eventFetchPages: Partial<Record<WatcherKind, number>> = {}
-    let afk: { status: string; timestamp: string } | null = null
-    let totalApiCalls = 0
+    const hostname = os.hostname()
+    const eventsByBucket: Record<string, RawEvent[]> = {}
+    const pagesByBucket: Record<string, number> = {}
 
     await Promise.all(
       WATCHERS.map(async (watcher) => {
-        const bucket = pickBucket(buckets, watcher)
+        const bucket = pickBucket(buckets, watcher, hostname)
         if (!bucket) return
 
-        const { events: rawEvents, pages } = await fetchAllEventsInRange(
+        const { events, pages } = await fetchAllEventsInRange(
           bucket.id,
           startIso,
           endIso
         )
-        const events = filterEventsInRange(rawEvents, startIso, endIso)
-        totalApiCalls += pages
-        eventCounts[watcher] = events.length
-        eventFetchPages[watcher] = pages
-
-        perWatcherTop.push(...aggregateTopActivities(events, watcher))
-        if (watcher === 'web') {
-          topWebLinks = aggregateTopWebLinks(events)
-        }
-
-        const newest = newestEvent(events)
-        if (!newest) return
-
-        const { app, title } = labelFromEvent(newest, watcher)
-        latest.push({
-          watcher,
-          bucketId: bucket.id,
-          app,
-          title,
-          timestamp: newest.timestamp,
-        })
-
-        if (watcher === 'afk') {
-          afk = { status: title, timestamp: newest.timestamp }
-        }
+        eventsByBucket[bucket.id] = events
+        pagesByBucket[bucket.id] = pages
       })
     )
 
-    const topActivities = mergeTopActivities(perWatcherTop)
-
-    latest.sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    return buildActivitySummary(
+      buckets,
+      eventsByBucket,
+      pagesByBucket,
+      range,
+      { hostname }
     )
-
-    const totalEventCount = Object.values(eventCounts).reduce(
-      (sum, n) => sum + (n ?? 0),
-      0
-    )
-
-    return {
-      connected: true,
-      bucketCount: buckets.length,
-      rangeHours: hours,
-      rangeLabel: range.label,
-      range: { start: startIso, end: endIso },
-      afk,
-      latest,
-      topActivities,
-      topWebLinks,
-      eventCounts,
-      eventFetchPages,
-      totalEventCount,
-      totalApiCalls,
-    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     if (message.includes('fetch failed') || message.includes('ECONNREFUSED')) {

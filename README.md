@@ -2,7 +2,7 @@
 
 # Jerry Client
 
-**v0.1 beta · macOS** — A local Electron app that chats with you and summarizes what you've been working on using [ActivityWatch](https://activitywatch.net/) on your machine.
+**v0.2 · macOS** — A local Electron app that chats with you and summarizes what you've been working on using [ActivityWatch](https://activitywatch.net/) on your machine.
 
 ## Download
 
@@ -16,7 +16,7 @@ Get the latest **macOS .dmg** from [GitHub Releases](https://github.com/SarkarSh
 - **Work summaries** from ActivityWatch when you ask about your day (e.g. *What have I been working on today?*)
 - **Work-related web links** (GitHub, docs, Notion, etc.) from the ActivityWatch **web** watcher
 - **ActivityWatch status** badge in the title bar (green = connected)
-- **Markdown** replies; click the **Jerry v0.1** badge for a quick feature list
+- **Markdown** replies; click the **Jerry v0.2** badge for a quick feature list
 
 ## Requirements
 

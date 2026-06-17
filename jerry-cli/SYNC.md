@@ -1,24 +1,23 @@
-# Sync map (copied from Jerry Client desktop)
+# Sync map
 
-Logic in `jerry-cli/src/` was copied from the Electron main process for an **independent** CLI experiment. The desktop app does **not** import this package. Reconcile manually when you want parity.
+`@sarkarshubhdeep/jerry-lib` (JSR) is the **engine**. jerry-cli and Electron are **host adapters** — they fetch ActivityWatch over HTTP, load config, and call lib APIs.
 
-| jerry-cli | Source (jerry-client @ `2341949`) |
-|-----------|-----------------------------------|
-| `src/aw/types.ts` | `electron/aw/types.ts` |
-| `src/aw/aggregate.ts` | `electron/aw/aggregate.ts` |
-| `src/aw/client.ts` | `electron/aw/client.ts` |
-| `src/llm/activity-intent.ts` | `electron/llm/activity-intent.ts` (trimmed; added `past hour`) |
-| `src/llm/activity-context.ts` | `electron/llm/activity-context.ts` |
-| `src/llm/models.ts` | `electron/llm/models.ts` |
-| `src/llm/types.ts` | `electron/llm/types.ts` (completions only) |
-| `src/llm/prompt.ts` | `electron/llm/prompt.ts` (CLI-specific wording; loads a3t assets, not inline strings) |
-| `src/llm/client.ts` | `electron/llm/client.ts` (rewritten: env config, no web search, single-turn) |
-| `assets/prompts/*` | not copied from desktop (a3t-managed shipped defaults) |
+| Host concern | jerry-cli | Electron |
+|--------------|-----------|----------|
+| AW HTTP | `jerry-cli/src/aw/client.ts` | `electron/aw/client.ts` |
+| AW types | re-export from lib | `electron/aw/types.ts` re-export from lib |
+| Activity intent glue | `needsActivityContext` in CLI report flow | `electron/llm/activity-intent.ts` |
+| LLM orchestration | lib `ask` / `generateReport` | `electron/llm/chat-host.ts` |
+| Config | `jerry-cli/src/config.ts` (env + cli.json) | `electron/store/settings.ts` (electron-store) |
+| Prompt overrides | `~/.config/jerry/assets/` | `{userData}/assets/` via `initJerryLib` |
+| Status labels | `jerry-cli/src/llm-labels.ts` | `electron/llm/chat-host.ts` + `electron/llm/status.ts` |
 
-**Not copied:** IPC, preload, `electron/store/settings.ts`, `electron/llm/status.ts`, Responses API / web search.
+**Not in hosts:** aggregation, date/range parsing, prompt strings, model allowlists, OpenAI client — all in jerry-lib.
 
 ## Prompt assets
 
-CLI prompts are **a3t-managed**. Shipped defaults are bundled in [@sarkarshubhdeep/jerry-lib](https://jsr.io/@sarkarshubhdeep/jerry-lib) (`assets/prompts/` in [SarkarShubhdeep/jerry-lib](https://github.com/SarkarShubhdeep/jerry-lib)). jerry-cli does not embed prompt files.
+Shipped defaults are bundled in [@sarkarshubhdeep/jerry-lib](https://jsr.io/@sarkarshubhdeep/jerry-lib). Hosts call `initJerryLib({ assets: { overridePath } })` once at startup. See [docs/a3t-usage.md](../docs/a3t-usage.md).
 
-The desktop app still uses inline prompts in `electron/llm/prompt.ts`. Consider adopting a3t there later for parity. See [docs/a3t-usage.md](../docs/a3t-usage.md).
+## Historical note
+
+Before Phase 5 (#33), jerry-cli logic was copied from `electron/`. Electron now imports the same lib as jerry-cli; keep HTTP clients in sync manually.

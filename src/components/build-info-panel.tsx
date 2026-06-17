@@ -14,6 +14,7 @@ const BETA_FEATURES = [
     "Work summaries from ActivityWatch (green AW badge)",
     "GitHub, docs, and other work links from the web watcher",
     "Model picker and Markdown replies",
+    "Shared jerry-lib engine (same as Jerry CLI)",
 ] as const;
 
 type BuildInfoPanelProps = {
@@ -40,7 +41,7 @@ export function BuildInfoPanel({ open, onOpenChange }: BuildInfoPanelProps) {
                         id={titleId}
                         className="text-sm font-medium leading-tight"
                     >
-                        Jerry v0.1 beta
+                        Jerry v0.2
                     </p>
                     <p className="text-muted-foreground text-xs">
                         macOS · local ActivityWatch + OpenAI

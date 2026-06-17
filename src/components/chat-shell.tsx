@@ -192,11 +192,11 @@ export function ChatShell() {
                             className="h-auto gap-1.5 bg-background/90 px-2 py-1 font-normal backdrop-blur-sm"
                             aria-expanded={buildInfoOpen}
                             aria-controls={BUILD_INFO_PANEL_ID}
-                            aria-label="About Jerry v0.1 beta"
+                            aria-label="About Jerry v0.2"
                             onClick={() => setBuildInfoOpen((open) => !open)}
                         >
                             Jerry{" "}
-                            <span className="font-mono text-xs">v0.1</span>
+                            <span className="font-mono text-xs">v0.2</span>
                         </Button>
                         <BuildInfoPanel
                             open={buildInfoOpen}

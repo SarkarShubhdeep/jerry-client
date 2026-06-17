@@ -8,7 +8,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@sarkarshubhdeep/jerry-lib": ["../node_modules/@sarkarshubhdeep/jerry-lib/_dist/mod.d.ts"]
+    }
   },
   "include": ["./**/*.ts"]
 }
